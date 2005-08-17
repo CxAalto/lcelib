@@ -28,10 +28,10 @@ public:
     k = (kl / 169) % 178 + 1;
     /* l = kl % 169 + 1; This was the error corrected by J. H. */
     l = kl % 169;
-
+ 
     for(ii = 1; ii < 98; ii++) {
       s = 0.0;
-      t = 0.5;
+      t = 0.5; 
       for(jj = 1; jj < 25; jj++) {
 	m = (((i*j) % 179) * k) % 179;
 	i = j;

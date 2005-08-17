@@ -1,0 +1,164 @@
+Verkoista ja containereista, lyhyesti. 
+
+Kirjastot sijaitsevat hakemistossa /proj/finance/lcelib. 
+Alkuun p‰‰see seuraavilla includeilla:
+
+#include "/proj/finance/lcelib/lcelib/Containers.H"
+#include "/proj/finance/lcelib/lcelib/Nets.H"
+#include "/proj/finance/lcelib./lcelib/Randgens.H"
+
+Hyvin yksinkertainen verkkoimplementaatio, jolla kelpaa aloittaa,
+tuntee nimen SymmNet. Se on templaattiluokka, joka syˆ parametreinaan
+s‰rmiin varastoidun datatyypin sek‰ tarkan implementaation m‰‰ritt‰vi‰
+templaattiluokkia. Seuraavat lienev‰t t‰ss‰ vaiheessa k‰yttˆkelpoisia:
+
+SymmNet<bool> net(size); // painottamaton
+SymmNet<float> net(size); // painotettu
+SymmNet<NDEdgeData> net(size); // jos jotakuta viel‰ kiinnostaa
+
+Verkon koko pit‰‰ siis m‰‰ritt‰‰ luotaessa. Muukin on toki
+mahdollista: kertokaa sitten, kun tarvitsette t‰llaisia
+ominaisuuksia. 
+
+Jos solmuja halutaan arpoa satunnaisesti painottaen degreell‰ tai
+strengthill‰, kannattaa seuraavia k‰ytt‰‰:
+
+SymmNet<*, ExplSumTreeTable>
+SymmNet<*, ExplSumTreeTable, WeightSumTable> 
+
+Ensimm‰inen k‰ytt‰‰ painona degreet‰, j‰lkimm‰inen strengthi‰. T‰m‰ on
+vain arvaus siit‰, mit‰ k‰ytt‰j‰ tahtoo: jos solmun paino varastoidaan
+eksplisiittisesti (j‰lkimm‰inen) kirjasto olettaa, ett‰ sit‰ halutaan
+k‰ytt‰‰ painona. Kaikki on kuitenkin kustomoitavissa: painot tuotetaan
+viime k‰dess‰ k‰ytt‰j‰n m‰‰rittelem‰n policy-luokan perusteella. *
+korvataan siis halutulla s‰rm‰luokalla.
+
+Verkon solmuihin p‰‰see k‰siksi []-operaattorilla, joka syˆ ihan
+tavallisia etumerkittˆmi‰ kokonaislukuja. Siis tyyliin:
+
+net[i]
+
+Varsinainen iteraattori on
+olemassa, mutta sille ei kiinte‰n kokoisilla verkoilla liene
+tarvetta. Geneeriset algoritmit (dijkstraattorit tms.) k‰ytt‰v‰t toki
+iteraattoreita, koska haluavat olla riippumattomia verkon
+implementaatiosta.
+
+const-referenssin solmuihin saa k‰ytt‰m‰ll‰ ()-operaattoria. T‰m‰ voi
+olla ajoittain k‰tev‰‰; kaiken pit‰isi kuitenkin yleisesti toimia
+tavanomaisillakin referensseill‰. const-referenssi on periaattessa
+suora referenssi solmun naapurustoa kuvaavaan tietorakenteeseen.
+
+S‰rm‰n i->j saa ulos seuraavalla notaatiolla:
+
+net[i][j]
+
+T‰lle voi sitten tehd‰ mit‰ lyst‰‰: =, +=, metodikutsut "->"-
+operaattorin kautta tms. on implementoitu. Verkko pidet‰‰n
+automaagisesti symmetrisen‰ ja aputietorakenteet valideina. Nollaksi
+(tai yleisemmin, default-konstruoituun arvoon) menev‰t s‰rm‰t
+poistetaan verkosta automaagisesti. Kun sellaisia kysyt‰‰n, saavat ne
+arvon 0 (tai yleisemmin default). 
+
+Const-referenssin s‰rm‰‰n saa ulos joko tyyliin:
+
+net(i)[j] 
+
+tai
+
+net(i,j)
+
+Sekin palauttaa default-arvon, jos s‰rm‰‰ ei lˆydy verkosta. 
+
+S‰rm‰iteraattori toimii seuraavasti:
+
+for (NetType::edge_iterator j=net[i].begin(); !j.finished; ++j) {
+   edge_destination=*j;
+   edge_weight=j.value();
+   j.value()+=1; // jne;
+}
+
+"value()" antaa siis ulos referenssin s‰rm‰n painoon. *-operaattori
+palauttaa ainoastaan const-referenssej‰: s‰rm‰n siirto t‰ytyy siis
+tehd‰ "manuaalisesti" kopioimalla s‰rm‰ ja asettamalla vanha
+0:ksi. T‰m‰ l‰hinn‰ turvallisuus- ja
+yhteensopivuussyist‰. Iteraattoritkin pit‰v‰t verkon invarianteista
+huolen automaagisesti. 
+
+NetType korvataan yll‰ vaikkapa ilmauksella
+SymmNet<bool> tms. Kannattanee sanoa koodin alussa esimerkiksi, jotta:
+
+typedef SymmNet<bool> NetType;
+
+niin ei tarvitse toistaa itse‰‰n, ja implementaatiota voi vaihtaa
+helposti.
+
+Solmu valitaan painotetun satunnaisesti komennolla
+
+node=net.weighedRandSlot(randgen); 
+
+T‰st‰ tulee ulos siis numero: itse solmuun saa referenssin []- tai
+()-operaattoreilla kuten edell‰.
+
+Sivuvaikutusten kanssa kannattaa olla tarkkana. Kun verkkoon lis‰t‰‰n
+s‰rm‰, vaikuttaa se heti toisen p‰‰ns‰ solmuun, painorakenteisiin
+jne. 
+
+Containerit.
+
+Eniten tarvitut container-luokat ovat seuraavat. Esitys on j‰lleen
+yksinkertainen: luokista esitet‰‰n ainoastaan vakioversiot:
+
+Set<KeyType>
+
+operaatiot:
+
+bool contains(key);
+bool put(key) // true, jos oli ennest‰‰m
+bool remove(key) // true, jos oli ja voitiin poistaa
+size_t size() // montako elementti‰ 
+SetType::iterator begin(), jolle * palauttaa avaimen, ++ ja finished()
+                           kuten edell‰, lis‰ksi remove() joka poistaa
+			   elementin, johon osoitetaan
+
+Map<KeyType, ValueType>
+
+operaatiot:
+
+contains, remove ja size kuten edell‰
+
+ValueType & operator[](KeyType key) 
+eli siis map[key]=value jne. Standardikirjaston esimerkin mukaisesti
+palauttaa default-konstruoidun arvon, jos avain ei ollut
+l‰sn‰. 
+
+Iteraattorista saa vastaavan referenssin kutsulla i.value(), kuten
+verkkojenkin tapuksessa. 
+
+AutoMap<KeyType, ValueType>
+
+Kuten Map, mutta nollaan menev‰t arvot poistetaan automaagisesti. 
+
+Ranmarin saa k‰yttˆˆn julistuksella:
+
+RandNumGen<> rands(int seed (optional)); 
+
+Select-operaatiot syˆv‰t suoraan generaattoreita: n‰in k‰ytt‰j‰n ei
+tarvitse kiinnostua siit‰, montako satunnaislukua tarvitaan ja miss‰
+muodossa.
+
+Luvun v‰lilt‰ [0, x[ saa ulos kutsulla
+
+ResultType rands.next(ResultType x); 
+
+Palautusarvo on siis samaa tyyppi‰ kuin syˆte. T‰m‰ on yleens‰ aika
+n‰pp‰r‰‰. (1.0 on muuten flotari, 1 int). 
+
+Siin‰p‰ kaikki. T‰m‰kin dokkari on muuten versionhallinnassa, ja
+p‰ivittyy hiljakseen 
+kunnes varsinainen web-dokumentaatio on valmiina.
+
+Tyˆn iloa!
+
+
+                       
