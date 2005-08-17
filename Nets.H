@@ -1,0 +1,277 @@
+#ifndef LCE_NETS_H
+#define LCE_NETS_H
+#include<cassert>
+#include<cstdlib>
+#include"Containers.H"
+#include<vector>
+
+/** 
+ * Some policies. We want to use magic values for the status. 
+ */
+
+template<typename EdgeData>
+struct NetEdgePolicy: public MapContainerPolicy<size_t, EdgeData> {
+  static const size_t MagicEmptyKey=UINT_MAX;
+};
+
+struct NetEdgeParams: public DefaultContainerParams {
+  typedef void StatusPolicy;
+};
+
+template<typename _EdgeData,
+	 template<typename, typename, typename, typename, typename
+		  > class EdgeTable=ValueTable,
+	 template<typename, typename, typename, typename, typename
+		  > class NodeTable=ValueTable,
+	 template<typename, typename, typename, typename, 
+		  template<typename, typename, typename, typename, typename
+			   > class Table > class EdgeIndex=LinearHash,
+	 template<typename, typename, typename, typename, 
+		  template<typename, typename, typename, typename, typename
+			   > class Table> class NodeIndex=Vector>
+class SymmNet:public Map<size_t, 
+			 AutoMap<size_t, _EdgeData, EdgeIndex, EdgeTable, 
+				 NetEdgePolicy<_EdgeData>, NetEdgeParams>, 
+			 NodeIndex, NodeTable> {
+  
+public:
+  typedef AutoMap<size_t, _EdgeData, EdgeIndex, EdgeTable, 
+		  NetEdgePolicy<_EdgeData>, NetEdgeParams> EdgeMap;
+  typedef Map<size_t, EdgeMap, NodeIndex, NodeTable>  NodeMap;
+  typedef SymmNet<_EdgeData, EdgeTable, NodeTable, 
+		  EdgeIndex, NodeIndex> MyType;
+  typedef NodeMap super;
+  typedef _EdgeData EdgeData;
+
+  SymmNet(size_t capacity=0): super(capacity) {}
+private:
+  /** Private methods helping the iterators, stubs etc.  */
+  void int_Set(const size_t source,const size_t dest, const EdgeData & value) {
+    assert(source != dest);
+    //std::cerr << "To int set";
+    /* The following works regardless of whether we use stubs or not. */
+    (&(super::operator[](source)))->setValue(dest,value);
+    //std::cerr << "Int set!";
+    assert (c()[source][dest]==value);
+  }
+  
+  EdgeMap & int_Edges(const size_t source) {
+    return super::operator[](source);
+  }
+
+  bool edgesLegal(const size_t source, const size_t dest) const {
+    if (!operator[](source).keyLegal(dest)) {
+      std::cerr << "source-dest illegal";
+      return false;
+    } 
+    if (!operator[](dest).keyLegal(source)) {
+      std::cerr << "dest-source illegal";
+      return false;
+    } 
+    if (operator[](source)[dest]!=operator[](dest)[source]) { 
+      std::cerr << "Asymm:";
+      std::cerr << operator[](source)[dest] << "," 
+      << operator[](dest)[source];
+      return false;
+    }
+    return true;
+  }    
+
+  bool localLegal(const size_t source, const size_t dest) const {
+    if (!(this->keyLegal(source))) {
+      std::cerr << "Source not legal\n";
+      return false;
+    }
+    if (!(this->keyLegal(dest))) {
+      std::cerr << "Dest not legal\n";
+      return false;
+    } 
+    return edgesLegal(source, dest);
+  }
+
+public:
+
+  const MyType & c() const {
+    return *(const_cast<const MyType *>(this));
+  }
+
+  const EdgeMap & operator()(const size_t i) const {
+    return super::operator[](i);
+  }
+
+  const EdgeData & operator()(const size_t i, const size_t j) const {
+    return super::operator[](i)[j];
+  }
+
+  class Node;
+ 
+  class Edge:public EdgeMap::value_stub {
+    friend class Node;
+    Node & node;
+    const size_t dest;
+  protected:
+    Edge(Node & source, EdgeMap & myRef, const size_t dst):
+      EdgeMap::value_stub(myRef, dst), node(source), dest(dst) {
+      //std::cerr << "Edge stub init";
+      assert(source.myIndex!=dst);
+      /* Symmetry req. Bloody hell: we cannot assert legality here. */
+    }
+  public:
+    
+    ~Edge() {
+      //std::cerr << "Deleting edge, value:" << (*this) << "\n";
+      /* We write tha data on the second end of the edge...*/
+      
+      node.getNet().int_Set(dest,node.myIndex,*this);
+      //std::cerr << "Other end set, value:" 
+      //<< node.getConstNet()[dest][node.myIndex] 
+      //<< "\n";
+      /* ...using the superclass's methods: we do not want 
+       * an eternal loop. */ 
+      EdgeMap::value_stub::_lce_finalize();
+      //std::cerr << "This end:" 
+      //<< node.getConstNet()[node.myIndex][dest]
+	     //<< ", but" << (*this) << "\n";
+     
+      //std::cerr << "Finished";
+      /* The node from which this was called should be finalized OK. */
+      /* Cannot assert fully here, as teh nodes's stub is yet 
+       * to be finalized. */
+      assert(node.getConstNet().edgesLegal(node.myIndex, dest));
+    }
+    
+    Edge & operator=(const EdgeData & src) {
+      EdgeMap::value_stub::operator=(src);
+      return (*this);
+    }    
+  };
+  
+  friend class Edge;
+
+  /* The EdgeIter does not update the container 
+   * until destructed. container on the fly. Easy to change 
+   * the default behaviour. */
+
+  class EdgeIter:public EdgeMap::iterator {
+  private:
+    friend class Node;
+    Node & node;
+  protected:
+    EdgeIter(Node & source): 
+      EdgeMap::iterator(&(source.ref())),
+      node(source) {
+      assert(this->finished() || 
+	     node.getConstNet().edgesLegal(**this, node.myIndex));
+    }
+
+  public:    
+    typedef typename EdgeMap::iterator::reference reference;
+    EdgeIter & operator++() {
+      //std::cerr << "Setting the edge from:" << (**this) << " to:"; 
+      //std::cerr << node.myIndex << " to value:";
+      //std::cerr << this->constValue() << "\n";
+      node.getNet().int_Set(**this, node.myIndex, this->constValue());
+      assert(node.getConstNet()[**this].isLegal());
+      node._lce_update();
+      assert(node.getConstNet()[**this][node.myIndex]
+	     ==node.getConstNet()[node.myIndex][**this]);
+      EdgeMap::iterator::operator++();
+      assert(this->finished() || 
+	     node.getConstNet().localLegal(**this, node.myIndex)); 
+      /* this would update the container: */
+      /* node._lce_update();*/
+      return *this;
+    }
+  };
+
+  class Node:public NodeMap::value_stub {
+    friend class MyType;
+    friend class Edge;
+    friend class EdgeIter;
+    friend class NodeIter;
+    const size_t myIndex;
+  private:
+    MyType & getNet() {return (MyType &) target;}
+    const MyType & getConstNet() {return getNet().c();}
+  protected:
+    Node(MyType & net, size_t index): NodeMap::value_stub(net, index),
+				      myIndex(index) {
+      //std::cerr << "Node stub inited";
+    }
+  public:
+    Edge operator[](size_t i) {
+      //assert(getConstNet().localLegal(myIndex, i));
+      /* This would be the place to prefetch. */
+      //std::cerr << "Gettin' edge\n";
+      return Edge(*this, ref(), i);
+    }
+    ~Node() {
+      //std::cerr << "Finalizing node stub";
+      NodeMap::value_stub::_lce_finalize();
+      assert(getConstNet().keyLegal(myIndex));
+    }
+
+    EdgeIter begin() {
+      return EdgeIter(*this);
+    } 
+
+    template<typename SourceType>
+    Node & operator=(const SourceType & src) {
+      for (typename SourceType::const_iterator i=src.begin(); 
+	   !i.finished(); 
+	   ++i) {
+	this->operator[](*i)=i.value();
+      }
+      return *this;
+    }
+  };
+  
+  friend class Node;
+
+  class NodeIter:public NodeMap::iterator {
+  protected:
+    friend class MyType;
+    NodeIter(MyType * target):NodeMap::iterator(target)  {}
+  public:
+    Node value() {
+      return Node(*((MyType *) target), *(*this));
+    }
+    /* All else OK. */
+  };
+
+  typedef NodeIter iterator;
+  typedef typename super::const_iterator const_iterator;
+  typedef EdgeIter edge_iterator;
+
+  iterator begin() {return NodeIter(this);}
+  
+  typedef typename EdgeMap::const_iterator const_edge_iterator;
+
+  Node operator[](const size_t i) {
+    assert(this->keyLegal(i));
+    return Node(*this, i);
+  }
+
+  typename NodeMap::const_reference operator[](const size_t i) const {
+    //assert(this->keyLegal(i));
+    return NodeMap::operator[](i);
+  }
+
+  bool isLegal() const {
+    if (!super::isLegal()) {return false;}
+    for (const_iterator i=super::begin(); !i.finished(); ++i) {
+      if (!i.value().isLegal()) return false;
+      for (const_edge_iterator j=i.value().begin();
+	   !j.finished(); ++j) {
+	if (j.value() != (*this)[*j][*i]) {
+	  std::cerr << "Bummer!\n";
+	  return false;
+	}
+      }
+    }
+    return true;
+  }
+
+};
+    
+#endif
