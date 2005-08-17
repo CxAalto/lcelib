@@ -23,7 +23,7 @@ struct DefaultContainerParams {
   typedef EmbStatusPolicy StatusPolicy; 
   typedef SmallHashController<> HashController;
   static const bool HASH_ORDERED=false;
-  static const unsigned treeLogBase=4;
+  static const unsigned treeLogBase=1;
 };
 
 /**
