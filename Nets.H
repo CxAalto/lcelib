@@ -52,7 +52,7 @@ private:
     /* The following works regardless of whether we use stubs or not. */
     (&(super::operator[](source)))->setValue(dest,value);
     //std::cerr << "Int set!";
-    assert (c()[source][dest]==value);
+    assert (operator()(source)[dest]==value);
   }
   
   EdgeMap & int_Edges(const size_t source) {
@@ -60,18 +60,18 @@ private:
   }
 
   bool edgesLegal(const size_t source, const size_t dest) const {
-    if (!operator[](source).keyLegal(dest)) {
+    if (!operator()(source).keyLegal(dest)) {
       std::cerr << "source-dest illegal";
       return false;
     } 
-    if (!operator[](dest).keyLegal(source)) {
+    if (!operator()(dest).keyLegal(source)) {
       std::cerr << "dest-source illegal";
       return false;
     } 
-    if (operator[](source)[dest]!=operator[](dest)[source]) { 
+    if (operator()(source)[dest]!=operator()(dest)[source]) { 
       std::cerr << "Asymm:";
       std::cerr << operator[](source)[dest] << "," 
-      << operator[](dest)[source];
+      << operator()(dest)[source];
       return false;
     }
     return true;
