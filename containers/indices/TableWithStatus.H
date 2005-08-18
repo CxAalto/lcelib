@@ -44,10 +44,12 @@ protected:
     return super::constRefToKey(i);
   }		    
 
+public:
   bool isUsed(const size_t i) const {
     return super::constRefToKey(i) != Policy::MagicEmptyKey;
   }
 
+protected:
   void setAsUsed(const size_t i) {} 
   void setAsEmpty(const size_t i) {
     super::refToKey(i)=Policy::MagicEmptyKey;
@@ -108,9 +110,10 @@ public:
     status.prefetch(i);
   }
 
-  
+protected:
   void setAsUsed(const size_t i) {status[i]=true;}
   void setAsEmpty(const size_t i) {status[i]=false;}
+public:
   bool isUsed(const size_t i) const {return status[i];}  
 };
 
@@ -145,11 +148,11 @@ protected:
   KeyType & refToKey(size_t i) {
     return super::refToKey(i).first();
   }	    
-
+public:
   bool isUsed(size_t i) const {
     return super::constRefToKey(i).second()==true;
   }
-
+protected:
   void setAsUsed(size_t i) {
     super::refToKey(i).second()=true;
   }
