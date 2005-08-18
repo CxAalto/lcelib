@@ -160,5 +160,41 @@ kunnes varsinainen web-dokumentaatio on valmiina.
 
 Työn iloa!
 
+Esimerkkejä (testaamattomia):
 
+Solmun i klusterointikerroin:
+
+size_t sum;
+// naapurit:
+for (NetType::const_edge_iterator j=net(i).begin();
+     !j.finished();
+     ++j) {
+   // niiden naapurit. Huomaa, ettei särmää *j->i tarvitse suodattaa pois. 
+   for (NetType::const_edge_iterator k=net(*j).begin();
+     !k.finished();
+     ++k) {
+     if (net(*k,i) != 0) sum++;
+}
+result=((float) sum)/net(i).size()/net(i).size(); 
+
+Jos kyseessä on painottamaton verkko, käy if-lauseen sijasta yksinkertaisesti 
+
+sum+=net(*k,i);
                        
+koska bool konvertoituu automaagisesti arvoihin 1 ja
+0. Harjoitustyöksi jätettäköön, miksi tulosta ei jaeta/kerrota
+kahdella. 
+
+Solmun i naapureiden average-degree:
+
+size_t sum
+for (NetType::const_edge_iterator j=net(i).begin();
+     !j.finished();
+     ++j) {
+   sum+=net(*j).size();
+}
+result=((float) sum)/net(i).size();
+
+
+
+
