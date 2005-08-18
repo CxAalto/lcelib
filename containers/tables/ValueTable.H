@@ -61,7 +61,11 @@ public:
     } else {
       return 0;
     }
-  }  
+  } 
+
+  size_t usedByCRTP(const size_t i) const {
+    return ((Index *) this)->isUsed(i);
+  }
 
 protected: 
   
@@ -175,15 +179,12 @@ protected:
   size_t weighedSlotSelect(WeightType val) const {
     assert(!base_empty());
     //std::cerr << "WSS. Val:" << val;
-    size_t i=0;
-    while (!(val < weightAt(i))) { /* Clearer this way. */
-      //std::cerr << "Skip " << i << "with w:" << weightAt(i);
-      val-=weightAt(i);
-      //std::cerr << ", Val left:" << val << "\n";
-      ++i;
-      assert(i<sizeByCRTP());
+    for (size_t i=0; i<sizeByCRTP(); ++i) {
+      if (usedByCRTP(i)) 
+	if (val<weightAt(i)) return i;
+	else val-=weightAt(i);
     }
-    return i;
+    assert(false);
   }
 
   /** Nothing to do. */
@@ -221,7 +222,8 @@ public:
     WeightType retval=WeightType();
     //std::cerr << "Weights:\n";
     for (size_t i=0; i<len; ++i) {
-      retval+=Policy::getWeight(constRefToVal(i));
+      if (usedByCRTP(i))
+	retval+=Policy::getWeight(constRefToVal(i));
       //std::cerr << i << ":";
       //std::cerr << Policy::getWeight(constRefToVal(i));
       //std::cerr << "\n";
