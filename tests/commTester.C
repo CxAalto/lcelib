@@ -14,7 +14,7 @@ int main() {
   float delta=0.5;
   float w_0=1;
 
-  typedef SymmNet<float, ExplSumTreeTable> NetType;
+  typedef SymmNet<float> NetType;
   /* A map from nodes in R to nodes in T. */
   typedef Map<size_t, Set<size_t> > ConnMap;
  
