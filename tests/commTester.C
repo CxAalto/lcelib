@@ -8,13 +8,13 @@
 int main() {
   RandNumGen<> generator;
   size_t seedSize=3;
-  size_t netSize=10000000;
+  size_t netSize=1000000;
   float p_r=0.95;
-  float p_t=0.9;
+  float p_t=0.5;
   float delta=0.5;
   float w_0=1;
 
-  typedef SymmNet<float> NetType;
+  typedef SymmNet<float, ExplSumTreeTable> NetType;
   /* A map from nodes in R to nodes in T. */
   typedef Map<size_t, Set<size_t> > ConnMap;
  

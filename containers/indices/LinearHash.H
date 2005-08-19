@@ -334,6 +334,7 @@ protected:
   LinearHash(size_t capacity=0): 
     super(HashController::sizeForCapacity(capacity)),
     controller(HashController::nativeSizeForCapacity(capacity)) {
+    //std::cerr << "Constructed a linear hash of cap:" << capacity << "\n"; 
       assert(isLegal());
     }  
 	

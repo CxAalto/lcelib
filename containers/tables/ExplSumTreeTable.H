@@ -26,9 +26,10 @@ template <typename KeyType, typename ValueType,
 class ExplSumTreeTable:public ValueTable<Pair<KeyType, 
 					      typename Policy::WeightType>,
 					 ValueType, Policy, Params, Index> {
+public:
+  typedef typename Policy::WeightType WeightType;
 private:
   typedef ExplSumTreeTable<KeyType, ValueType, Policy, Params, Index> MyType;
-  typedef typename Policy::WeightType WeightType;
   typedef ImplTreeHelper<Params::treeLogBase> help;
   typedef ValueTable<Pair<KeyType, WeightType>, ValueType, 
 		     Policy, Params, Index> super;
@@ -43,7 +44,9 @@ private:
 
 public:
   typedef WeightWeightPolicy<MyType> DefaultWeightPolicy;
-  
+
+
+
 private:
 
   /** For legality only.  */
@@ -100,7 +103,10 @@ protected:
     super::disassemble();
     //std::cerr << "dizz";
     for (size_t i=0; i<sizeByCRTP(); ++i) {
-      refToSum(i)=weightAt(i);
+      if (usedByCRTP(i)) 
+	refToSum(i)=weightAt(i);
+      else 
+	refToSum(i)=WeightType();
     }
   }
   
@@ -185,7 +191,9 @@ protected:
   } 
 
   void setValue(const size_t loc, const ValueType & value) {
-    WeightType oldWeight=weightAt(loc);
+    assert(localLegal(loc));
+    WeightType oldWeight=WeightType();
+    if (usedByCRTP(loc)) oldWeight=weightAt(loc);
     super::setValue(loc, value);
     this->updateAt(loc, weightAt(loc)-oldWeight);
     assert(localLegal(loc));
@@ -278,21 +286,31 @@ protected:
   }
 
   ExplSumTreeTable(size_t size=0): super(size) {
+    //std::cerr << "Constructing an ESTT of size" << size << "\n";
     for (size_t i=0; i<size; ++i) {
     refToSum(i)=WeightType();
+    assert(isLegal());
     //clearVal(i);
     }
   };
   
   bool localLegal(const size_t loc) const {
     /* Redundant information should be OK. */
-    if (childSum(loc)+weightAt(loc)==sumAt(loc)) {
+    WeightType weight=WeightType();
+    if (usedByCRTP(loc)) weight=weightAt(loc);
+    if (childSum(loc)+weight==sumAt(loc)) {
       return super::localLegal(loc); 
     } else {
       std::cerr << "Sum tree not legal. Loc:" << loc 
 		<<  " childSum:" << childSum(loc) 
       	<< ", local weight:" << weightAt(loc) << ", sum:"
-      	<< sumAt(loc) << "\n";
+		<< sumAt(loc) << ", used:" << usedByCRTP(loc) << "\n";
+      std::cerr << "Table:\n";
+      //for (size_t i=0; i<sizeByCRTP(); ++i) {
+      //std::cerr << i << " " << (usedByCRTP(loc)) << " " << (weightAt(loc))
+      //	  << " " << (sumAt(loc)) << "\n";
+      //}
+	
       return false;
     }
   }
