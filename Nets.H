@@ -48,7 +48,9 @@ private:
   /** Private methods helping the iterators, stubs etc.  */
   void int_Set(const size_t source,const size_t dest, const EdgeData & value) {
     assert(source != dest);
+    //assert(operator()(source).isLegal());
     //std::cerr << "To int set";
+
     /* The following works regardless of whether we use stubs or not. */
     (&(super::operator[](source)))->setValue(dest,value);
     //std::cerr << "Int set!";

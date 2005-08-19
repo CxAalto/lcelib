@@ -282,6 +282,7 @@ public:
   ~Map() {
     //std::cerr << "Killing a map at" << this << "\n";
   }
+
   Map(const Map & src) {
     std::cerr << "Copy constructing at " << this << " from " << (&src) 
     << " WTF?\n";
@@ -297,8 +298,8 @@ public:
    */
 
   reference operator[](const KeyType & key) {
-    //std::cerr << "A reference from a map " << this << " with key: " << key 
-    //	      << "\n";
+    std::cerr << "A reference from a map " << this << " with key: " << key 
+    	      << "\n";
     return refToVal(findAndInit(key));
   }
 
