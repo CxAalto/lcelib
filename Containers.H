@@ -150,7 +150,7 @@ public:
     //std::cerr << "Pudding:";
     for (typename SourceType::const_iterator i=src.begin();
 	 !i.finished(); ++i) {
-      std::cerr << " " << (*i);
+      //std::cerr << " " << (*i);
       put(*i);
     }
     //std::cerr << "\n";
@@ -298,8 +298,8 @@ public:
    */
 
   reference operator[](const KeyType & key) {
-    std::cerr << "A reference from a map " << this << " with key: " << key 
-    	      << "\n";
+    //std::cerr << "A reference from a map " << this << " with key: " << key 
+    //      << "\n";
     return refToVal(findAndInit(key));
   }
 
