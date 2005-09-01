@@ -1,11 +1,14 @@
+--  Muutama typo yms. korjattu 19.8.05  -Riitta
+
+
 Verkoista ja containereista, lyhyesti. 
 
 Kirjastot sijaitsevat hakemistossa /proj/finance/lcelib. 
 Alkuun pääsee seuraavilla includeilla:
 
-#include "/proj/finance/lcelib/lcelib/Containers.H"
-#include "/proj/finance/lcelib/lcelib/Nets.H"
-#include "/proj/finance/lcelib./lcelib/Randgens.H"
+#include "/proj/finance/lcelib/Containers.H"
+#include "/proj/finance/lcelib/Nets.H"
+#include "/proj/finance/lcelib/Randgens.H"
 
 Hyvin yksinkertainen verkkoimplementaatio, jolla kelpaa aloittaa,
 tuntee nimen SymmNet. Se on templaattiluokka, joka syö parametreinaan
@@ -66,13 +69,13 @@ net(i)[j]
 
 tai
 
-net(i,j)
+net(i,j)  //huomaa: tämä syntaksi ei toiminut vielä 19.8.05
 
 Sekin palauttaa default-arvon, jos särmää ei löydy verkosta. 
 
 Särmäiteraattori toimii seuraavasti:
 
-for (NetType::edge_iterator j=net[i].begin(); !j.finished; ++j) {
+for (NetType::edge_iterator j=net[i].begin(); !j.finished(); ++j) {
    edge_destination=*j;
    edge_weight=j.value();
    j.value()+=1; // jne;
@@ -173,13 +176,19 @@ for (NetType::const_edge_iterator j=net(i).begin();
    for (NetType::const_edge_iterator k=net(*j).begin();
      !k.finished();
      ++k) {
-     if (net(*k,i) != 0) sum++;
+     if (net(*k)[i] != 0) sum++;    
 }
-result=((float) sum)/net(i).size()/net(i).size(); 
+result=((float) sum)/net(i).size() / ( net(i).size()-1 ); 
+//korjaus: klusterointikertoimen jakaja korjattu 
+Huomaa: Kannattaa välttää toistuvia jakolaskuja, koska
+niistä saattaa syntyä pyöristysvirhettä. Lasketaan mieluummin 
+summan osamäärä kuin osamäärien summa. 
+
 
 Jos kyseessä on painottamaton verkko, käy if-lauseen sijasta yksinkertaisesti 
 
-sum+=net(*k,i);
+sum+=net(*k,i);  //tämä syntaksi ei toiminut vielä 19.8.05,
+		 net(*k)[i] toimii
                        
 koska bool konvertoituu automaagisesti arvoihin 1 ja
 0. Harjoitustyöksi jätettäköön, miksi tulosta ei jaeta/kerrota
