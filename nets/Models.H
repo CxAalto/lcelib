@@ -129,7 +129,7 @@ bool ConnectivityCheck(NetType & theNet) {
   
   /* Find all shortest paths from node 0 */
   Dijkstrator<NetType> paths(theNet,0); 
-  for (; !paths.isAtEnd(); ++paths) {
+  for (; !paths.finished(); ++paths) {
   }
  
   /* Check whether all other nodes were reachable */ 

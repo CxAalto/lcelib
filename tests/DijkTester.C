@@ -87,7 +87,7 @@ public:
     return currRoute;
   }
   
-  bool isAtEnd() const {return done;}
+  bool finished() const {return done;}
     
   struct RouteType {
     WeightType weight;
@@ -136,7 +136,7 @@ int main() {
   StoopidDijkstrator<SymmNet<float> > testIter(theNet, 0);
 #endif
 
-  for (; !routeIter.isAtEnd(); ++routeIter) {
+  for (; !routeIter.finished(); ++routeIter) {
     std::cerr << "Found route to:" << (*routeIter).getDest() << ", len: " 
 	      << (*routeIter).getWeight();
 #ifdef TEST_DIJK
@@ -149,7 +149,7 @@ int main() {
     std::cerr << "\n";
   }
 #ifdef TEST_DIJK
-  assert (testIter.isAtEnd());
+  assert (testIter.finished());
 #endif
 
 }

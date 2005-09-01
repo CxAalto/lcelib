@@ -142,7 +142,7 @@ public:
     return currRoute;
   }
   
-  bool isAtEnd() const {return done;}
+  bool finished() const {return done;}
 
     
   struct RouteType {
