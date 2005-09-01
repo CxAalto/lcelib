@@ -1,4 +1,4 @@
-//#define NDEBUG
+#define NDEBUG
 #include <cassert>
 #include <iostream>
 #include "../Randgens.H"
