@@ -285,7 +285,7 @@ void CommunityNet(NetType& theNet,size_t netSize, float p_r, float p_t, float de
     
     while (generator.nextNormed() >= p_t) {
       /* A random node from R */
-      size_t neighbour=RtoT.randKey(generator);      
+      size_t neighbour=RtoT.randKey(generator);
       /* If some node's neighbourhood gets "full", we break. */
       if (theNet(neighbour).size()==RtoT[neighbour].size()) break;
       /* A single step of (weighed) random walk: */
