@@ -36,10 +36,14 @@ protected:
     }
   }
 
+public:
+
   bool isUsed(size_t i) {
     assert(i<length);
     return true;
   }
+
+protected:
   
   void removeAt(const size_t i) {
     super::remove_stage_1(i);
