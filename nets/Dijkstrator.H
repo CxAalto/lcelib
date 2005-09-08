@@ -172,12 +172,12 @@ public:
     size_t getDest() const {return dest;}
     WeightType getWeight() const {return weight;}
   };
-  
+
+  const Set<size_t> & getFoundSet() const {
+    return found;
+  }
 
 };
 
 #endif
-
-
-
 
