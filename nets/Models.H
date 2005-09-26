@@ -49,10 +49,10 @@
 
 #ifndef MODELS_H
 #define MODELS_H
-#include "/proj/finance/lcelib/Containers.H"
-#include "/proj/finance/lcelib/Nets.H"
-#include "/proj/finance/lcelib/Randgens.H"
-#include "/proj/finance/lcelib/nets/Dijkstrator.H"
+#include "../Containers.H"
+#include "../Nets.H"
+#include "../Randgens.H"
+#include "Dijkstrator.H"
 
 #include <cassert>
 #include <iostream>
@@ -200,7 +200,7 @@ void CommunityNet(NetType& theNet,size_t netSize, float p_r, float p_t, float de
   typedef Map<size_t, Set<size_t> > ConnMap;
   
 
-
+  ClearNet(theNet,netSize); /* make sure there are no edges present to start with */
 
   /* generate the seed network */
   
