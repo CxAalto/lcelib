@@ -30,19 +30,13 @@ private:
   unsigned numElems;
   NodeType * root;
 
-  /* The standard promote operation of fibonacci heap. 
-   * Could also be a method of the nodes themselves, but this way,
-   * we do not have to traverse the father links up to the root list. */
+  /** 
+   * Removes a node from a place. "Deep" means that the subject 
+   * is not in the root list. Children remain attached. 
+   */
 
-  void promoteNode(NodeType * subject) {
-    assert (subject); /* Do not feed me nulls, please */
-    NodeType * oldFather=subject->father;
-    assert (containsNode(subject));
-    subject->mark=false;
-    /* Only promote, if there is some sense in it. */
-    if (oldFather == 0) return;
-    
-    /* Remove from here... */
+  void removeDeep(NodeType * subject) {
+    assert(subject->father); 
     if (subject->rightSister==subject) {
       assert (subject->leftSister==subject);
       subject->father->child=0;
@@ -51,25 +45,65 @@ private:
       subject->rightSister->leftSister=subject->leftSister;
       subject->leftSister->rightSister=subject->rightSister;
     }
-    /* ...and move to the root list: */
+  } 
+
+  /**
+   * Adds a node to the root list. Children remain attached and 
+   * the new minimum is not checked for. 
+   */
+
+  void addToRootList(NodeType * subject) {
     subject->rightSister=root->rightSister;
     subject->leftSister=root;
     root->rightSister->leftSister=subject;
     root->rightSister=subject;
     subject->father=0;
     degreeList[subject->degree]=subject;
-    if ((*subject) < (*root)) root=subject;
-    /* Done. Now, degree and recurse: */
-    oldFather->degree--;
-    if (!(oldFather->father)) {
-      degreeList[oldFather->degree]=oldFather;
-      degreeList[oldFather->degree+1]=0;
+  }
+  
+  /* Chain is run on the fathers of nodes cut. */
+
+  void promoteChain(NodeType * subject) {
+    assert(containsNode(subject)); /* Fathers automagically contained. */
+    --subject->degree; /* Just lost a child. Why to decrease the degree? 
+			* I don't know, but appears in the pseudocode. */
+    NodeType * oldFather;
+    while (subject->father) { 
+      assert(!root->siblingTo(subject));
+      if (!(subject->mark)) {
+	subject->mark=true;
+	return;
+      }
+      /* Not at root list. marked.
+       * Remove from here... */
+      oldFather=subject->father;
+      removeDeep(subject);
+      /* Add to root list. Marks the father as null. */
+      addToRootList(subject); 
+      subject=oldFather;
+      --(subject->degree);
     }
-    if (!(oldFather->mark)) {
-      oldFather->mark=true;
-    } else {      
-      promoteNode(oldFather);
-    } /* Compiler! Tail recursion. Should be eliminated. */ 
+    /* At the root list. Update it, the node has just lost a child. */
+    degreeList[subject->degree]=subject;
+    degreeList[(subject->degree)+1]=0;
+  }
+
+  /* The standard promote operation of fibonacci heap. 
+   * Could also be a method of the nodes themselves, but this way,
+   * we do not have to traverse the father links up to the root list. */
+
+  void promoteNode(NodeType * subject) {
+    assert (subject); /* Do not feed me nulls, please */
+    assert (subject->father);
+    NodeType * oldFather=subject->father;
+    assert (containsNode(subject));
+    assert(containsNode(oldFather));
+    /* Only promote, if there is some sense in it. */
+    removeDeep(subject);
+    addToRootList(subject);
+    if ((*subject) < (*root)) root=subject;
+    assert(rootListValid(true, false));
+    promoteChain(oldFather);
   }
   
   void compress() {
@@ -175,6 +209,49 @@ private:
     } while (tempnode != changed);
   }
   
+  
+  /** 
+   * Pops a single node from the root list
+   */
+
+  void popNode(NodeType * node) {
+    assert(root->siblingTo(node));
+    assert(rootListValid(false,  /* Do not check the whole tree */ 
+			 false)); /* Do not assume to be just compressed */
+       
+    --numElems;
+    
+    if (node==node->leftSister) { /* The only element in the root list */
+      assert (node==node->rightSister);
+      root=node->child;
+    } else {
+      if (node->child != 0) {
+	/* Add the descendants of the former root node to the root list */
+	root=node->child;
+	node->leftSister->rightSister=root;
+	node->rightSister->leftSister=root->leftSister;
+	root->leftSister->rightSister=node->rightSister;
+	root->leftSister=node->leftSister;
+	root->father=0;
+      } else { /* no children, just remove  */
+	node->leftSister->rightSister=node->rightSister;
+	node->rightSister->leftSister=node->leftSister;
+	root=node->rightSister;
+      }
+    }
+    degreeList[node->degree]=0;
+    assert(rootListValid(false,  /* FIXME:Do not check the whole tree */ 
+			 false,  /* Do not assume to be just compressed */
+			 true)); /* Do not check for the right root node
+				  * nor father-links being null */
+
+    if (root!=0) compress();
+
+    assert (rootListValid()); 
+    //assert ((!root) || (!((*root) < (*retval))));
+  }
+
+
 public:
   FiboHeapCore() {
     numElems=0;
@@ -191,6 +268,17 @@ public:
     } else {            /* the whole bastard */
       assert (numElems==0);
     }
+  }
+
+  void deleteNode(NodeType * subject) {
+    assert(containsNode(subject));
+    if (subject->father) {
+      NodeType * oldFather=subject->father;
+      removeDeep(subject);
+      addToRootList(subject);
+      promoteChain(oldFather);
+    }
+    popNode(subject); /* Decreases the number of elems. */
   }
   
   /**
@@ -212,10 +300,7 @@ public:
     if (root==0) {
       root=node;
     } else {
-      node->rightSister=root->rightSister;
-      node->leftSister=root;
-      root->rightSister=node;
-      node->rightSister->leftSister=node;
+      addToRootList(node);
       if ((*node) < (*root)) {
 	root=node;
       }
@@ -237,12 +322,19 @@ public:
       if (*subject < *root) {
 	root=subject;
       }
+      
     }
+  }
+
+  void justIncreased(NodeType * subject) {
+    deleteNode(subject);
+    subject->init();
+    push(subject);
   }
 
   unsigned getNumElems() {
     assert ((numElems==0) == (root==0));
-    return numElems;
+    return numElems; 
   }
 
   bool isEmpty() {
@@ -261,45 +353,10 @@ public:
    * the father pointers to 0.
    */
 
+
   NodeType * pop() {
     NodeType * retval=root;
-
-    assert(rootListValid(false,  /* Do not check the whole tree */ 
-			 false)); /* Do not assume to be just compressed */
-    if (retval==0) {
-      assert (numElems==0);
-      return 0;
-    }
-    
-    numElems--;
-    
-    if (retval==retval->leftSister) { /* The only element in the root list */
-      assert (retval==retval->rightSister);
-      root=retval->child;
-    } else {
-      if (root->child != 0) {
-	/* Add the descendants of the former root node to the root list */
-	root=root->child;
-	retval->leftSister->rightSister=root;
-	retval->rightSister->leftSister=root->leftSister;
-	root->leftSister->rightSister=retval->rightSister;
-	root->leftSister=retval->leftSister;
-	root->father=0;
-      } else { /* no children, just remove  */
-	retval->leftSister->rightSister=retval->rightSister;
-	retval->rightSister->leftSister=retval->leftSister;
-	root=retval->rightSister;
-      }
-    }
-   
-    degreeList[retval->degree]=0;
-    assert(rootListValid(false,  /* FIXME:Do not check the whole tree */ 
-			 false,  /* Do not assume to be just compressed */
-			 true)); /* Do not check for the right root node
-				  * nor father-links being null */
-    if (root!=0) compress();
-    assert (rootListValid()); /* FIXME:Assume compressed, just root list check. */
-    assert ((!root) || (!((*root) < (*retval))));
+    popNode(root);
     return retval;
   }
 
@@ -329,6 +386,7 @@ public:
 		     bool isCompressed=true,
 		     bool justPopped=false) const { /* between pop and compr */
     NodeType * iter=root;
+    //std::cerr << "[";
     bool passed=true;
     if (iter==0) {
       if (numElems!=0) return false;
@@ -384,16 +442,15 @@ public:
 	}
       }
     }
+    //std::cerr << "]";
     return passed;
   }  
 };
 
 template<typename ValueType>
-class NodeDataContainer {
+struct NodeDataContainer {
   ValueType val;
-public:
   typedef ValueType & ValueRefType;
-
   ValueRefType value() {return val;}
 };
   
@@ -407,11 +464,12 @@ public:
 
 
 
-template <typename KeyType, typename ValueType=void>
-class FiboHeapNode {
-  friend class FiboHeapCore<FiboHeapNode<KeyType, ValueType> >;  
+template <typename KeyType, typename ValueType>
+class FiboHeapNode:public NodeDataContainer<ValueType> {
+  typedef FiboHeapNode<KeyType, ValueType> MyType;
+  friend class FiboHeapCore<MyType>;  
   typedef HeapKeyTraits<KeyType> MyKeyTraits;
-  typedef FiboHeapNode<KeyType, ValueType> MyType; 
+public:
   typedef typename NodeDataContainer<ValueType>::ValueRefType ValueRefType;
 protected:
   /* Full sister linking: */
@@ -421,8 +479,6 @@ protected:
   MyType * child;
   unsigned degree;
   bool mark;
-
-  NodeDataContainer<ValueType> val; 
 
   // protected:
   KeyType key; /* Protected, for subclasses */
@@ -437,7 +493,7 @@ protected:
     MyType * temp;   
     iter=this;
    
-    std::cerr << "D";
+    //std::cerr << "D";
 
     do {
       if (iter->child != 0) {
@@ -448,18 +504,23 @@ protected:
       delete temp;
     } while ((iter!=0) && (iter != this));
   }
+  
+  void init() {
+    father=0;
+    child=0;
+    degree=0;
+    rightSister=this;
+    leftSister=this;
+    mark=false;
+  }
 
 public: 
 
   FiboHeapNode(KeyType theKey=0) {
-    father=0;
-    child=0;
-    rightSister=this;
-    leftSister=this;
-    mark=false;
-    degree=0;
+    init();
     key=theKey;
   }
+
 
 
   /* This is crucial: the standard destructor does not really 
@@ -495,9 +556,16 @@ public:
     heap.justDecreased(this);
   }
 
-  ValueRefType value() {
-    return val.value();
-  }
+  void setKey(const KeyType newKey, FiboHeapCore<MyType> & heap) {
+    assert (heap.containsNode(this));
+    if (MyKeyTraits::precedes(key, newKey)) {
+      key=newKey;
+      heap.justIncreased(this);
+    } else {
+      key=newKey;
+      heap.justDecreased(this);
+    }
+  } 
   
   bool localLegal() const {
     if (!((leftSister->rightSister==this) &&

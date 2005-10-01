@@ -14,7 +14,7 @@
 
 template <typename NetworkType,
 	  template <typename> class Policy=WeightPolicy, 
-	  template <typename, typename> class HeapType=FiboHeapMap > 
+	  template <typename, typename> class HeapType=FiboHeap> 
 class StoopidDijkstrator {
   typedef Policy<typename NetworkType::EdgeData> MyPolicy;
   typedef typename MyPolicy::WeightType WeightType;
@@ -69,8 +69,10 @@ public:
     } /* Edge iteration */
     /* Then, let's pop the new shortest route: */
 
-    while (!myHeap.isEmpty()) {
-      newRoute.weight=myHeap.pop(newRoute.dest);
+    while (!myHeap.finished()) {
+      newRoute.weight=*myHeap;
+      newRoute.dest=myHeap.value();
+      ++myHeap;
       if (!found.contains(newRoute.dest)) {
 	found.put(newRoute.dest);
 	currRoute=newRoute;
@@ -93,7 +95,9 @@ public:
     WeightType weight;
     size_t dest;
     
-    size_t getDest() const {return dest;}
+    size_t getDest() const {
+      return dest;
+    }
     WeightType getWeight() const {return weight;}
   };
 };
@@ -126,7 +130,7 @@ int main() {
     for (int j=i+1; j<NET_SIZE; j++) {
       randval=myRand.nextNormed();
       theNet[i][j]+=randval;
-      std::cerr << i << "-" << j << ":" << randval << "\n";
+      //std::cerr << i << "-" << j << ":" << randval << "\n";
     }
   }
 
@@ -135,10 +139,11 @@ int main() {
   std::cerr << "Running tests\n";
   StoopidDijkstrator<SymmNet<float> > testIter(theNet, 0);
 #endif
-
+  int i=1;
   for (; !routeIter.finished(); ++routeIter) {
-    std::cerr << "Found route to:" << (*routeIter).getDest() << ", len: " 
-	      << (*routeIter).getWeight();
+    std::cerr << i << "Found route:(" << (*routeIter).getSource() << "->" 
+	      << (*routeIter).getDest() << "), len: " 
+	      << (*routeIter).getWeight() << "\n";
 #ifdef TEST_DIJK
     assert ((*testIter).getWeight() == (*routeIter).getWeight());
     if ((*testIter).getDest() != (*routeIter).getDest()) {
@@ -146,12 +151,11 @@ int main() {
     }    
     ++testIter;
 #endif
-    std::cerr << "\n";
+    ++i;
   }
 #ifdef TEST_DIJK
   assert (testIter.finished());
 #endif
-
 }
 
 
