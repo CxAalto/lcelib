@@ -57,14 +57,11 @@
 
 template <typename NetworkType,
           typename Policy=WeightPolicy<typename NetworkType::EdgeData>,
-          template <typename, typename> class HeapType=FiboHeap> 
+          template <typename, typename> class HeapType=FiboHeapMap > 
 class Dijkstrator {
   typedef typename Policy::WeightType WeightType;
   typedef Dijkstrator<NetworkType, Policy, HeapType> MyType;
-  
-  struct RouteEnds; /* Incomplete. See below. */
-
-  typedef HeapType<WeightType, RouteEnds> MyHeapType;
+  typedef HeapType<WeightType, size_t> MyHeapType;
   typedef typename MyHeapType::NodeType HeapNodeType;
   typedef HeapNodeType * HeapNodePtr;
   typedef typename NetworkType::const_edge_iterator EdgeIter;
@@ -100,21 +97,19 @@ public:
 
     /* We init the structures by simply putting the start node to the 
      * heap with weight zero, which should be the default.  */
-    currRoute.ends.dest=start;
-    currRoute.ends.source=start; /* No real need... */
+    currRoute.dest=start;
     currRoute.weight=0;
     found.put(start);
-    ++(*this); /* ... 'cause this should do away with it. */
+    ++(*this);
   }
   
   /* Standard destructor should be fine. */
-  
+
   /**
    * Moves the "iterator" to next shortest route.
    */
 
   MyType & operator++() {
-
     WeightType currWeight;
     WeightType prevWeight;
 
@@ -132,38 +127,27 @@ public:
 	  prevWeight=candidates[*iter]->getKey();
 	  /* Expl:     hash map |      heap node     |  weight  */   
 	  if (currWeight < prevWeight) {
-	    /* Set new source: */
-	    candidates[*iter]->value().source=currRoute.getDest();
 	    myHeap.decreaseKey(candidates[*iter], currWeight);
 	    /* Explanation as before */
 	  } /* Else, nothing. Better one in the heap already. */
 	} else { /* No route whatsoever found yet. Let's add one: */
-	  RouteEnds ends;
-	  ends.source=currRoute.getDest();
-	  ends.dest=*iter;
-	  candidates[*iter]=myHeap.push(currWeight, ends);
+	  candidates[*iter]=myHeap.push(currWeight, *iter);
 	}
       } else {
-	/* Shortest path to node already found */
+	/* Shortest path to node already found found */
 	assert (!candidates.contains(*iter));
       }
     } /* Edge iteration */
-    
+
     /* Then, let's pop the new shortest route: */
-    if (myHeap.finished()) {
+    if (myHeap.isEmpty()) {
       done=true;
     } else {
-      WeightType oldWeight=currRoute.weight;     
-      currRoute.weight=*myHeap;
-      currRoute.ends=myHeap.value();
-      ++myHeap;
-
+      WeightType oldWeight=currRoute.weight;      
+      currRoute.weight=myHeap.pop(currRoute.dest);
       assert(oldWeight <= currRoute.weight);
-   
-      assert(candidates.isLegal());
-      assert(candidates.contains(currRoute.ends.dest));
-      candidates.remove(currRoute.ends.dest);
-      found.put(currRoute.ends.dest);
+      candidates.remove(currRoute.dest);
+      found.put(currRoute.dest);
     }
     return (*this);
   }
@@ -178,21 +162,14 @@ public:
     return currRoute;
   }
   
-  bool finished() const {return done;}
-
-
-  struct RouteEnds {
-    size_t source;
-    size_t dest;
-  };
+  bool isAtEnd() const {return done;}
 
     
   struct RouteType {
     WeightType weight;
-    RouteEnds ends;
+    size_t dest;
     
-    size_t getDest() const {return ends.dest;}
-    size_t getSource() const {return ends.source;}
+    size_t getDest() const {return dest;}
     WeightType getWeight() const {return weight;}
   };
 
@@ -203,4 +180,7 @@ public:
 };
 
 #endif
+
+
+
 

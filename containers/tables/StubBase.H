@@ -15,9 +15,10 @@
 
 template<typename ArrayType, template<typename> class SuperStub>
 class ArrayStub: protected SuperStub<ArrayType> {
-  typedef typename SuperStub<ArrayType>::reference reference;
-  typedef typename SuperStub<ArrayType>::ValueType ValueType;
-  typedef typename SuperStub<ArrayType>::pointer pointer;
+  typedef SuperStub<ArrayType> super;
+  typedef typename super::reference reference;
+  typedef typename super::ValueType ValueType;
+  typedef typename super::pointer pointer;
   typedef ArrayStub<ArrayType, SuperStub> MyType;
 protected:
   ArrayStub(ArrayType & tgt, const size_t slot):
@@ -25,84 +26,84 @@ protected:
   } 
 public:
 
-  operator reference() {return ref();}
+  operator reference() {return (super::ref());}
   
   template<typename SourceType>
   reference operator=(const SourceType & src) {
-    return ref()=src;
+    return (super::ref())=src;
   }
 
   template<typename SourceType>
   reference operator+=(const SourceType & src) {
     //std::cerr << "+=:ing..";
-    ref()+=src;
+    (super::ref())+=src;
     //std::cerr << "Done+=\n";
-    return ref();
+    return (super::ref());
   }
 
   template<typename SourceType>
   reference operator-=(const SourceType & src) {
-    return ref()-=src;
+    return (super::ref())-=src;
   }
 
   template<typename SourceType>
   reference operator*=(const SourceType & src) {
-    return ref()*=src;
+    return (super::ref())*=src;
   }
 
   template<typename SourceType>
   reference operator/=(const SourceType & src) {
-    return ref()/=src;
+    return (super::ref())/=src;
   }
 
   template<typename SourceType>
   reference operator%=(const SourceType & src) {
-    return ref()%=src;
+    return (super::ref())%=src;
   }
 
   template<typename SourceType>
   reference operator<<=(const SourceType & src) {
-    return ref()<<=src;
+    return (super::ref())<<=src;
   }
 
   template<typename SourceType>
   reference operator>>=(const SourceType & src) {
-    return ref()>>=src;
+    return (super::ref())>>=src;
   }
 
   template<typename SourceType>
   reference operator|=(const SourceType & src) {
-    return ref()|=src;
+    return (super::ref())|=src;
   }
  
   template<typename SourceType>
   reference operator^=(const SourceType & src) {
-    return ref()^=src;
+    return (super::ref())^=src;
   }
   
   template<typename SourceType>
   reference operator&=(const SourceType & src) {
-    return ref()&=src;
+    return (super::ref())&=src;
   }
   
   reference operator++() {
-    return ++ref();
+    return ++(super::ref());
   }
 
   ValueType operator++(int) {
-    return ref()++;
+    return (super::ref())++;
   }
 
   reference operator--() {
-    return --ref();
+    return --(super::ref());
   }
 
   ValueType operator--(int) {
-    return ref()--;
+    return (super::ref())--;
   }
 
   pointer operator->() {
-    return pnt();
+    return super::pnt();
   }
 
   /**
@@ -178,13 +179,13 @@ protected:
   pointer pnt() {return &ref();}
   
   void _lce_finalize() { /* Write back. */
-    memcpy(&(target.directRefTo(slot)), &value, &sizeof(ArrayType::ValueType));
+    memcpy(&(target.directRefTo(loc)), &value, &sizeof(ArrayType::ValueType));
   }
   /** 
    * No real difference at this level.
    */
   void _lce_update() {_lce_finalize();}
-  bool _lce_upToDate() {return value==target.directRefTo(slot);}
+  bool _lce_upToDate() {return value==target.directRefTo(loc);}
 };
 
 /**

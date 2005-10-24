@@ -40,7 +40,7 @@ private:
        * we are not sure if it is the first occurrence and hence 
        * want to continue the search in the first half of the region of 
        * interest */
-      if (Policy::firstSmaller(constRefToKey(probeLoc), key)) {
+      if (Policy::firstSmaller(super::constRefToKey(probeLoc), key)) {
 	//std::cerr << ", Last half\n";
 	startLoc=probeLoc+1; /* Key larger to that at the probeLoc  */
       } else { 
@@ -51,7 +51,7 @@ private:
       //std::cerr << "Start:" << startLoc << ", limit" << lastLoc << "\n";
     } 
     /* Homed on a single element. */
-    if (Policy::firstSmaller(constRefToKey(startLoc), key)) {
+    if (Policy::firstSmaller(super::constRefToKey(startLoc), key)) {
       startLoc++;
     }
     //std::cerr << "Done FF, at" << startLoc << " \n";
@@ -70,22 +70,22 @@ protected:
     loc=findFirstSlot(key);
     //std::cerr << "FF returning, len" << length << "\n";  
     /* Following: length !=0 , short-circuit evaluation */
-    return (loc<length && constRefToKey(loc) == key);
+    return (loc<length && super::constRefToKey(loc) == key);
   }
 
   bool findNext(const KeyType & key, size_t & loc) const {
-    return (++loc<length && constRefToKey(loc) == key);
+    return (++loc<length && super::constRefToKey(loc) == key);
   }
 
   bool forcedFind(const KeyType & key, size_t & loc) {
     //std::cerr << "Forced find: old len:" << length << ", key" << key;
     //std::cerr << "Old key/val pairs:\n";
     //for (size_t i=0; i<length ; ++i) {
-    //std::cerr << constRefToKey(i) << ":" << constRefToVal(i) << "\n";
+    //std::cerr << super::constRefToKey(i) << ":" << constRefToVal(i) << "\n";
     //}
 
     loc=findFirstSlot(key);
-    if (loc<length && constRefToKey(loc) == key) {
+    if (loc<length && super::constRefToKey(loc) == key) {
       //std::cerr << ", Found.\n";
       return true;
     }
@@ -94,7 +94,7 @@ protected:
     ++length;
     
     //std::cerr << "New len:" << length;
-    refToKey(loc)=key;
+    super::refToKey(loc)=key;
     return false;
   }
 
@@ -109,7 +109,7 @@ protected:
   size_t placeToPut(const KeyType & key, size_t & loc) {
     loc=findFirstSlot(key);
     size_t retval=0;
-    while (loc<length && constRefToKey(probeLoc) == key) {
+    while (loc<length && super::constRefToKey(loc) == key) {
       loc++;
       retval++;
     }
@@ -141,7 +141,7 @@ protected:
 
   template<typename AuxType>
   AuxType * auxData() {
-    return (AuxType *) &lenght;
+    return (AuxType *) &length;
   }
 
 public:
@@ -195,7 +195,7 @@ public:
     }
 
     const KeyType & operator*() {
-      return target->constRefToKey(loc);
+      return target->super::constRefToKey(loc);
     }
     
     bool finished() {return loc==target->size();}
@@ -211,12 +211,12 @@ public:
     size_t loc;
     if (findFirst(key, loc)) {
       if ((loc>0) 
-	  && (Policy::firstSmaller(constRefToKey(loc), constRefToKey(loc-1))
-	      || (constRefToKey(loc) == constRefToKey(loc-1))))
+	  && (Policy::firstSmaller(super::constRefToKey(loc), super::constRefToKey(loc-1))
+	      || (super::constRefToKey(loc) == super::constRefToKey(loc-1))))
 	return false;
       if ((loc+1<length) 
-	  && (Policy::firstSmaller(constRefToKey(loc+1), constRefToKey(loc))
-	      || (constRefToKey(loc+1) == constRefToKey(loc))))
+	  && (Policy::firstSmaller(super::constRefToKey(loc+1), super::constRefToKey(loc))
+	      || (super::constRefToKey(loc+1) == super::constRefToKey(loc))))
 	return false;
       return super::localLegal(loc);
     }
@@ -225,7 +225,7 @@ public:
 
   bool isLegal() const {
     for (size_t i=0; i<length; ++i) {
-      if (!keyLegal(constRefToKey(i))) return false;
+      if (!keyLegal(super::constRefToKey(i))) return false;
     }
     return super::isLegal();
   }

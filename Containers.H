@@ -146,11 +146,11 @@ public:
   
   template<typename SourceType>
   MyType & operator=(const SourceType & src) {
-    clear();
+    super::clear();
     //std::cerr << "Pudding:";
     for (typename SourceType::const_iterator i=src.begin();
 	 !i.finished(); ++i) {
-      //std::cerr << " " << (*i);
+      std::cerr << " " << (*i);
       put(*i);
     }
     //std::cerr << "\n";
@@ -265,7 +265,7 @@ protected:
       //std::cerr << ", was new\n";
       //this->refToVal(loc)=ValueType();
       /* FIXME: not always necessary */
-      clearVal(loc);
+      super::clearVal(loc);
     } else {
       //std::cerr << ", was present\n";
     }
@@ -282,7 +282,6 @@ public:
   ~Map() {
     //std::cerr << "Killing a map at" << this << "\n";
   }
-
   Map(const Map & src) {
     std::cerr << "Copy constructing at " << this << " from " << (&src) 
     << " WTF?\n";
@@ -299,7 +298,7 @@ public:
 
   reference operator[](const KeyType & key) {
     //std::cerr << "A reference from a map " << this << " with key: " << key 
-    //      << "\n";
+    //	      << "\n";
     return refToVal(findAndInit(key));
   }
 
@@ -347,7 +346,8 @@ public:
    */
 
   class iterator: public super::iterator {
-    friend class MyType;
+    //friend class MyType;
+    friend class Map<KeyType, ValueType, Index, Table, Policy, Params>;
   private:
     //iterator() {}
   protected:
@@ -356,14 +356,20 @@ public:
     typedef typename MyType::reference reference;
     typedef typename MyType::const_reference const_reference;
     /* reference refers to superclass's refToValue */
-    reference value() {return ((MyType *) target)->refToVal(loc);}
+    reference value() {
+      return 
+	((MyType *) super::iterator::target)->refToVal(super::iterator::loc);
+    }
     const_reference constValue() const {
-      return ((MyType *) target)->constRefToVal(loc);
+      return ((MyType *) super::iterator::target)->constRefToVal(super::iterator::loc);
     }
   };
 
   class const_iterator: public super::const_iterator {
-    friend class MyType;
+    /* Boring...*/
+    //friend class MyType;
+    friend class Map<KeyType, ValueType, Index, Table, Policy, Params>;
+    typedef typename super::const_iterator super_iter;
   private:
     const_iterator() {}
   protected:
@@ -373,7 +379,9 @@ public:
   public:
     typedef typename MyType::const_reference const_reference;
     /* reference refers to superclass's refToValue */
-    const_reference value() {return ((MyType *) target)->constRefToVal(loc);}
+    const_reference value() {
+      return ((MyType *) super_iter::target)->constRefToVal(super_iter::loc);
+    }
   };
 
   friend class iterator;
@@ -381,30 +389,6 @@ public:
   
   iterator begin() {return iterator(this);}
   const_iterator begin() const {return const_iterator(this);}
-
-  template<typename SourceType>
-  MyType & operator=(const SourceType & src) {
-    clear();
-    //std::cerr << "Pudding:";
-    for (typename SourceType::const_iterator i=src.begin();
-	 !i.finished(); ++i) {
-      //std::cerr << " " << (*i);
-      this->operator[](*i)=i.value();
-    }
-    //std::cerr << "\n";
-    return *this;
-  }
-
-  template<typename SourceType>
-  MyType & operator+=(const SourceType & src) {
-    //std::cerr << "The put cascade. Source size:" << src.size() << "\n";
-    for (typename SourceType::const_iterator i=src.begin();!i.finished();++i) {
-      this->operator[](*i)+=i.value();
-    }
-    //std::cerr << "Put casc done.\n";
-    return *this;
-  }
-
 };
 
 
@@ -569,7 +553,7 @@ public:
 
   template<bool AutoFinalize> 
   class stub:public super::stub {
-    friend class MyType;
+    friend class  AutoMap<KeyType, ValueType, Index, Table, Policy, Params>;
     typedef typename super::stub SuperStub;
   protected:
     stub(MyType & target, const KeyType & key):
@@ -592,7 +576,7 @@ public:
     void _lce_finalize() {
       if ((*this)==ValueType()) {
 	SuperStub::_lce_finalize();
-	((MyType &) target).removeFrom(loc);
+	((MyType &) SuperStub::target).removeFrom(SuperStub::loc);
       } else {
 	//std::cerr << "Finalizing AM:stub. TS:";
 	//std::cerr << ((MyType &) target).getTableSize() << "\n";
@@ -656,7 +640,7 @@ public:
   
   class iterator:public super::iterator {
     typedef typename super::iterator SuperIter;
-    friend class MyType;
+    friend class AutoMap<KeyType, ValueType, Index, Table, Policy, Params>;
   public:
     typedef typename SuperIter::reference reference;
   private:
@@ -672,24 +656,24 @@ public:
      * we are not finished, we must check for the current element:
      */
     ~iterator() {
-      if (!finished() && value()==ValueType()) {
+      if (!SuperIter::finished() && SuperIter::value()==ValueType()) {
 	SuperIter::remove();
       }
     }
 
     iterator & operator++() {
       //std::cerr << "AutoMaps:s ++:";
-      assert(((super *) target)->isLegal());
-      if (constValue()==ValueType()) {
+      assert(SuperIter::target->isLegal());
+      if (SuperIter::constValue()==ValueType()) {
 	//std::cerr << "Removing:";
-	remove();
+	SuperIter::remove();
 	//std::cerr << "done. Asserting:"; 
-	assert(((MyType *) target)->isLegal());
+	assert(((MyType *) SuperIter::target)->isLegal());
       } else {
 	//std::cerr << "++ing super.";
-	assert(((MyType *) target)->isLegal());
+	assert(((MyType *) SuperIter::target)->isLegal());
 	SuperIter::operator++();
-	assert(((MyType *) target)->isLegal());
+	assert(((MyType *) SuperIter::target)->isLegal());
       }
       //std::cerr << "Done.";
       return *this;
@@ -716,7 +700,7 @@ public:
 
   bool isLegal() const {
     if (!super::isLegal()) return false;
-    for (const_iterator i=begin(); !i.finished(); ++i) {
+    for (const_iterator i=super::begin(); !i.finished(); ++i) {
       if (i.value()==ValueType()) return false;
     } 
     return true;
@@ -795,7 +779,7 @@ public:
   /** The stub inherits from nothing. Sets do not have stubs. */
 			     
   class stub {
-    friend class MyType;
+    friend class AutoMap<KeyType, bool, Index, Table, Policy, Params>;
   private:
     stub() {};
   protected:
@@ -841,7 +825,8 @@ public:
 
   class iterator: public super::iterator {
   protected:
-    friend class MyType;
+    //friend class MyType;
+    friend class AutoMap<KeyType, bool, Index, Table, Policy, Params>;
     /* This is used to store the value set */
     bool val;
     
@@ -876,7 +861,8 @@ public:
   
   class const_iterator: public super::const_iterator { 
   protected:
-    friend class MyType;
+    //friend class MyType;
+    friend class AutoMap<KeyType, bool, Index, Table, Policy, Params>;
     const_iterator(const MyType * const target): 
       super::const_iterator(target) {}
   public:

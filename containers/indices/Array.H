@@ -39,7 +39,7 @@ protected:
 
   bool findFirst(const KeyType & key, size_t & loc) const {
     for (loc=0; loc<length; ++loc) {
-      if (key == constRefToKey(loc)) {
+      if (key == super::constRefToKey(loc)) {
 	return true;
       }
     }
@@ -47,14 +47,14 @@ protected:
   }
 
   bool findNext(const KeyType & key, size_t & loc) const {
-    return (++loc<length && constRefToKey(loc) == key);
+    return (++loc<length && super::constRefToKey(loc) == key);
   }
 
   bool forcedFind(const KeyType & key, size_t & loc) {
     if (findFirst(key,loc)) return true;
     super::pushToTail();
     assert(loc==length);
-    refToKey(length++)=key;
+    super::refToKey(length++)=key;
     return false;
   }
 
@@ -64,7 +64,7 @@ protected:
   void placeToPut(const KeyType & key, size_t & loc) {
     super::pushToTail();
     loc=length++;
-    refToKey(loc)=key;
+    super::refToKey(loc)=key;
   }
 
   void removeFrom(size_t loc) {
@@ -89,7 +89,7 @@ protected:
 
   template<typename AuxType>
   AuxType * auxData() {
-    return (AuxType *) &lenght;
+    return (AuxType *) &length;
   }
 
 public:

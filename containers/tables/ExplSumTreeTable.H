@@ -26,10 +26,9 @@ template <typename KeyType, typename ValueType,
 class ExplSumTreeTable:public ValueTable<Pair<KeyType, 
 					      typename Policy::WeightType>,
 					 ValueType, Policy, Params, Index> {
-public:
-  typedef typename Policy::WeightType WeightType;
 private:
   typedef ExplSumTreeTable<KeyType, ValueType, Policy, Params, Index> MyType;
+  typedef typename Policy::WeightType WeightType;
   typedef ImplTreeHelper<Params::treeLogBase> help;
   typedef ValueTable<Pair<KeyType, WeightType>, ValueType, 
 		     Policy, Params, Index> super;
@@ -44,18 +43,16 @@ private:
 
 public:
   typedef WeightWeightPolicy<MyType> DefaultWeightPolicy;
-
-
-
+  
 private:
 
   /** For legality only.  */
   
   WeightType childSum(const size_t loc) const {
     WeightType retval=0;
-    assert(help::childLimit(loc, sizeByCRTP()) <= sizeByCRTP());
+    assert(help::childLimit(loc, super::sizeByCRTP()) <= super::sizeByCRTP());
     for (size_t i=help::child(loc); 
-	 i<help::childLimit(loc, sizeByCRTP()); i++) {
+	 i<help::childLimit(loc, super::sizeByCRTP()); i++) {
       retval+=sumAt(i);
     }
     return retval;
@@ -63,12 +60,12 @@ private:
 
   
   void updateAt(size_t i, WeightType diff) {
-    assert(i < sizeByCRTP());
+    assert(i < super::sizeByCRTP());
     //std::cerr << i << " ";
     while (true) {
       refToSum(i)+=diff;
       //std::cerr << i << "," <<  childSum(i) << "," <<  sumAt(i) 
-      //		<< "," << weightAt(i) << "\n";
+      //		<< "," << super::weightAt((i) << "\n";
       //assert(noCheck || localLegal(i));
       if (help::isRoot(i)) break;
       i=help::father(i);
@@ -102,11 +99,8 @@ protected:
   void disassemble() {
     super::disassemble();
     //std::cerr << "dizz";
-    for (size_t i=0; i<sizeByCRTP(); ++i) {
-      if (usedByCRTP(i)) 
-	refToSum(i)=weightAt(i);
-      else 
-	refToSum(i)=WeightType();
+    for (size_t i=0; i<super::sizeByCRTP(); ++i) {
+      refToSum(i)=super::weightAt(i);
     }
   }
   
@@ -119,7 +113,7 @@ protected:
     super::assemble();
     //std::cerr << "Assembling, size by crtp:" << sizeByCRTP() << "\n";
     /* We cannot substract 0 from zero */
-    for (size_t i=sizeByCRTP(); i>1; --i) {
+    for (size_t i=super::sizeByCRTP(); i>1; --i) {
       //std::cerr << "Azzert";
       refToSum(help::father(i-1))+=sumAt(i-1);
       assert(localLegal(i-1));
@@ -133,10 +127,10 @@ protected:
    */
 
   void moveOrSwap(size_t to, size_t from) {
-    assert(to < sizeByCRTP());
-    assert(from < sizeByCRTP());
+    assert(to < super::sizeByCRTP());
+    assert(from < super::sizeByCRTP());
     assert(to != from);
-    WeightType weightDiff=weightAt(to)-weightAt(from);
+    WeightType weightDiff=super::weightAt(to)-super::weightAt(from);
     /* We swap keys here and let the superclass swap the values. 
      * We use the memcpy as usual. */
     KeyType tempKey;
@@ -178,24 +172,22 @@ protected:
    */
   void remove_stage_2(const size_t i) {
     /* First, the tree */
-    WeightType tempWeight=weightAt(i);
+    WeightType tempWeight=super::weightAt(i);
     /* The, kill the elem completely in order to set weight to zero. 
      * We do it here, otherwise our assertions shall fail in the 
      * updateAt. 
      */
-    removeVal(i);
-    clearVal(i);
+    super::removeVal(i);
+    super::clearVal(i);
     if (tempWeight != WeightType()) {
       updateAt(i, -tempWeight);
     }
   } 
 
   void setValue(const size_t loc, const ValueType & value) {
-    assert(localLegal(loc));
-    WeightType oldWeight=WeightType();
-    if (usedByCRTP(loc)) oldWeight=weightAt(loc);
+    WeightType oldWeight=super::weightAt(loc);
     super::setValue(loc, value);
-    this->updateAt(loc, weightAt(loc)-oldWeight);
+    this->updateAt(loc, super::weightAt(loc)-oldWeight);
     assert(localLegal(loc));
   }
 
@@ -204,17 +196,20 @@ public:
 
   template<bool AutoUpdate>
   class stub:public super::value_stub {
-    friend class MyType;
+    /* Blah. */
+    //friend class MyType;
+    friend class ExplSumTreeTable<KeyType, ValueType, Policy, Params, Index>;
   private:
     stub() {} /* Not to be called: always bound to a slot. */
     WeightType oldWeight;
 
     void _int_lce_update() {
-      WeightType diff=((MyType &) target).weightAt(loc)-oldWeight;
+      WeightType diff=
+	((MyType &) super::target).weightAt(super::loc)-oldWeight;
       //std::cerr << "FI";
       if (diff != WeightType()) { /* Did change. */
 	//std::cerr << "IN";
-	((MyType &) target).updateAt(loc, diff);
+	((MyType &) super::target).updateAt(super::loc, diff);
 	//std::cerr << "OUT";
 	//assert(((MyType &) target).localLegal(loc));
       }
@@ -231,7 +226,7 @@ public:
 
     void _lce_update() {
       _int_lce_update(); 
-      oldWeight=((MyType &) target).weightAt(loc);
+      oldWeight=((MyType &) super::target).weightAt(super::loc);
       super::value_stub::_lce_update();
     }
 
@@ -241,7 +236,7 @@ public:
     } 
     
     bool _lce_upToDate() {
-      if (oldWeight != ((MyType &) target).weightAt(loc)) {
+      if (oldWeight != ((MyType &) super::target).weightAt(super::loc)) {
 	return false;
       } else {
 	return super::value_stub::_lce_upToDate();
@@ -259,7 +254,7 @@ public:
       //std::cerr << "Copy constructing a _Stub_";
       return super::value_stub::operator=(src);
     }
-    
+
     ~stub() {
       if (AutoUpdate) { 
 	//std::cerr << "Fin stub...";
@@ -286,37 +281,27 @@ protected:
   }
 
   ExplSumTreeTable(size_t size=0): super(size) {
-    //std::cerr << "Constructing an ESTT of size" << size << "\n";
     for (size_t i=0; i<size; ++i) {
     refToSum(i)=WeightType();
-    assert(isLegal());
     //clearVal(i);
     }
   };
   
   bool localLegal(const size_t loc) const {
     /* Redundant information should be OK. */
-    WeightType weight=WeightType();
-    if (usedByCRTP(loc)) weight=weightAt(loc);
-    if (childSum(loc)+weight==sumAt(loc)) {
+    if (childSum(loc)+super::weightAt(loc)==sumAt(loc)) {
       return super::localLegal(loc); 
     } else {
       std::cerr << "Sum tree not legal. Loc:" << loc 
 		<<  " childSum:" << childSum(loc) 
-      	<< ", local weight:" << weightAt(loc) << ", sum:"
-		<< sumAt(loc) << ", used:" << usedByCRTP(loc) << "\n";
-      std::cerr << "Table:\n";
-      //for (size_t i=0; i<sizeByCRTP(); ++i) {
-      //std::cerr << i << " " << (usedByCRTP(loc)) << " " << (weightAt(loc))
-      //	  << " " << (sumAt(loc)) << "\n";
-      //}
-	
+      	<< ", local weight:" << super::weightAt(loc) << ", sum:"
+      	<< sumAt(loc) << "\n";
       return false;
     }
   }
 
   bool isLegal() const {
-    for (size_t i=0; i<sizeByCRTP(); i++) {
+    for (size_t i=0; i<super::sizeByCRTP(); i++) {
       if (!localLegal(i)) return false;
     }
     if (weight()!=super::weight()) return false;
@@ -331,7 +316,7 @@ protected:
 public:
   
   WeightType weight() const {
-    if (base_empty()) {
+    if (super::base_empty()) {
       return WeightType();
     } else {
       return sumAt(0);
@@ -347,20 +332,20 @@ public:
 
   template<typename RandSource>
   size_t weighedRandSlot(RandSource & src) const {
-    assert(!base_empty());
+    assert(!super::base_empty());
     assert(weight() != WeightType());
     //assert(isLegal());
     /* Get a rand from 0  (incl) to the weigth sum (excl) */  
     WeightType value=src.next(weight());//(/*weight()*/); 
     //std::cerr << "Selecting, value=" << value << "\n";
     //std::cerr << "Table looks like:\n";
-    //for (size_t i=0; i< sizeByCRTP(); ++i) {
-    //std::cerr << i << ":" << weightAt(i) << "," << sumAt(i) << "\n";
+    //for (size_t i=0; i< super::sizeByCRTP(); ++i) {
+    //std::cerr << i << ":" << super::weightAt(i) << "," << sumAt(i) << "\n";
     //} 
     size_t i=0; /* Start from the root */
-    while (!(value < weightAt(i))) { /* Clearer this way. */
+    while (!(value < super::weightAt(i))) { /* Clearer this way. */
       if (value < sumAt(i)) {
-	value-=weightAt(i);
+	value-=super::weightAt(i);
 	i=help::child(i); /* Found the subtree */
 	//std::cerr << i << ", left:" << value << "\n";
       } else {
@@ -368,7 +353,7 @@ public:
 	++i;
 	//std::cerr << i << ", left:" << value << "\n";
       }
-      assert(i < sizeByCRTP());
+      assert(i < super::sizeByCRTP());
     }
     //std::cerr << "Selected:" << i << "\n";
     return i;
@@ -389,3 +374,4 @@ struct WeightPolicy<ExplSumTreeTable<KeyType, ValueType,
 					     Policy, Params, Index> > {};
 
 #endif
+

@@ -1,14 +1,14 @@
-//#define NDEBUG
+#define NDEBUG
 #include <iostream>
 #include <algorithm>
-#include "../misc/FiboHeap.H"
-#include "../Randgens.H"
+#include "./FiboHeap.H"
+#include "./randgens.H"
 
 #define NUM_RANDS 10000000
 #include <cassert>
 
 int main() {
-  RandNumGen<> myRand;
+  Ranmar<float> myRand;
   FiboHeap<float> myHeap;
   
   float * randvals;
@@ -17,13 +17,12 @@ int main() {
   
   std::cerr << "To rands\n";
 
-  randvals=new float[NUM_RANDS];
-  for (i=0; i<NUM_RANDS; ++i) randvals[i]=myRand.nextNormed();
-
+  randvals=myRand.array(NUM_RANDS);
+  
   std::cerr << "Into heap\n";
 
   for (i=0; i<NUM_RANDS; i++) {
-    assert (myHeap.size()==i);
+    assert (myHeap.getNumElems()==i);
     myHeap.push(randvals[i]);
   }
 
@@ -33,13 +32,13 @@ int main() {
 
   std::cerr << "The poptest:";
   for (i=0; i<NUM_RANDS; i++) {
-    assert(myHeap.size() == NUM_RANDS-i);
+    assert(myHeap.getNumElems() == NUM_RANDS-i);
+    assert(myHeap.getMinKey() == randvals[i]);
     //std::cerr << "p";
-    
+    popped=myHeap.pop();
     // assert(myHeap.isValid());
     //std::cerr << "P";
-    assert(*myHeap == randvals[i]);
-    ++myHeap;
+    assert(popped == randvals[i]);
     if (i % 10000 == 0) std::cerr << i << "\n";
   }
 

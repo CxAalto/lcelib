@@ -1,4 +1,4 @@
-#define NDEBUG
+//#define NDEBUG
 #include <cassert>
 #include <iostream>
 #include "../Randgens.H"
@@ -8,9 +8,9 @@
 int main() {
   RandNumGen<> generator;
   size_t seedSize=3;
-  size_t netSize=1000000;
+  size_t netSize=10000000;
   float p_r=0.95;
-  float p_t=0.5;
+  float p_t=0.9;
   float delta=0.5;
   float w_0=1;
 

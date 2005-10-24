@@ -128,15 +128,17 @@ public:
     FloatType sinval;
     FloatType cosval;
     FloatType angle;
-    FloatType logFactor;
-    angle=2 * ((FloatType) M_PI) * generator.nextNormed();
+    FloatType factor;
+    angle=2 * ((FloatType) M_PI) * Generator::nextNormed();
     /* This should be enough for the compler to use a combined 
      * instruction: (BTW. gcc does not yet) */ 
     sinval=sin(angle); cosval=cos(angle);
-    factor=sqrt(-2*log(generator.nextNormed()));
+    factor=sqrt(-2*log(Generator::nextNormed()));
     first=factor*cosval;
     second=factor*sinval;
   }
 };
+
+RandNumGen<> globalRandSource;
 
 #endif

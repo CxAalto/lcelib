@@ -3,29 +3,10 @@
 #ifndef FIBO_HEAP
 #define FIBO_HEAP
 
-/* This trick probably should be generalized. */
-
-struct EmptyType {};
-
-template <typename T>
-struct VoidMask {
-  typedef T Type;
-};
-
-template <>
-struct VoidMask<void> {
-  typedef EmptyType Type;
-};
-
-
-template <typename KeyType, typename ValueType=void>
-class FiboHeap {
+template <typename KeyType, typename ValueType>
+class FiboHeapMap {
 public:
-  typedef FiboHeap<KeyType, ValueType> MyType;
   typedef FiboHeapNode<KeyType, ValueType> NodeType;
-  typedef typename VoidMask<ValueType>::Type ValType;
-  typedef ValType & ValRefType;
-  typedef const ValType & constValRefType;
 private:
   FiboHeapCore<NodeType> heap;
   KeyType lastPopped;
@@ -33,50 +14,38 @@ public:
   /* Pushes a key-value pair to the heap. Returns a pointer 
    * to the node so generated, which can be used for decreasing key, 
    * deletion, setting values again etc. */
-  NodeType * push(const KeyType key) {
-    NodeType * retval=new NodeType(key);
+  NodeType * push(const KeyType key, const ValueType value=0) {
+    NodeType * retval;
+    retval=new NodeType(key);
+    retval->value()=value;
     heap.push(retval);
     return retval;
   }
-  
-  NodeType * push(const KeyType key, constValRefType value) {
-    NodeType * retval=push(key);
-    retval->value()=value;
+
+  /**
+   * Pops the next key from the heap. The value is returned by reference.
+   */
+  KeyType pop(ValueType & value) {
+    KeyType retval;
+    NodeType * popped;
+    popped=heap.pop();
+    assert(popped!=0);
+    value=popped->value();
+    retval=popped->getKey();    
+    delete popped;
+    lastPopped=retval;
     return retval;
   }
 
-  MyType & operator++() {
-    assert(heap.getRoot()); /* !=0 */
-    lastPopped=heap.getRoot()->getKey();
-    delete heap.pop();
-    return *this;
-  }
+  bool isEmpty() {return heap.isEmpty();}
 
-  KeyType operator*() const {
-    assert(heap.getRoot());
-    return heap.getRoot()->getKey();
-  }
-
-  ValRefType value() {
-    assert(heap.getRoot());
-    return heap.getRoot()->value();
-  }
-
-  bool finished() {return heap.isEmpty();}
+  KeyType getMinKey() const {return heap.getMinKey();}
   
   void decreaseKey(NodeType * subject, KeyType newKey) {
     subject->decreaseKey(newKey, heap);
   } 
-
-  void setKey(NodeType * subject, KeyType newKey) {
-    subject->setKey(newKey, heap);
-  }
-
-  void deleteNode(NodeType * subject) {
-    heap.deleteNode(subject);
-  }
     
-  unsigned size() {
+  unsigned getNumElems() {
     return heap.getNumElems();
   }
 
@@ -85,6 +54,56 @@ public:
 						  * check degree list only 
 						  * if just popped. */
   }
+};
+
+template <typename KeyType>
+class FiboHeap {
+ typedef FiboHeapNode<KeyType, void> NodeType;
+private:
+  KeyType lastPopped;  
+  FiboHeapCore<NodeType> heap;
+public:
+  /* Pushes a key to the heap. */
+  NodeType * push(const KeyType key) {
+    NodeType * retval;
+    retval=new NodeType(key);
+    heap.push(retval);
+    return retval;
+  }
+
+  /**
+   * Pops the next key from the heap.
+   */
+  KeyType pop() {
+    KeyType retval;
+    NodeType * popped;
+    popped=heap.pop();
+    assert(popped!=0);
+    retval=popped->getKey();
+    delete popped;
+    lastPopped=retval;
+    return retval;
+  }
+  
+  KeyType getLastTime() {return lastPopped;}
+
+  KeyType getMinKey() const {
+    assert (heap.getRoot()); /* !=0, that means. !=NULL, in C. */
+    return heap.getRoot()->getKey();
+  }
+  
+  void decreaseKey(NodeType * subject, KeyType newKey) {
+    subject->decreaseKey(newKey,heap);
+  } 
+    
+  unsigned getNumElems() {
+    return heap.getNumElems();
+  }
+
+  bool isEmpty() {return heap.isEmpty();}
+
+  bool isValid() {return heap.rootListValid(true);}
+
 };
 
 #endif

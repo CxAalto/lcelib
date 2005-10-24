@@ -11,19 +11,20 @@ struct KeyPolicy {
   static const size_t numWords=sizeof(KeyType)/sizeof(size_t);
   static const size_t numBytes=sizeof(KeyType)-numWords*sizeof(size_t);
   static size_t getHashValue(const KeyType & subj) {
-    size_t i;
+    size_t val=0;
     /* These should be calculated, resolved & unwrapped at 
      * compile-time 
      */
     /* First, the part that is a multiple of the machine word size */
     for (size_t i=0; i<numWords; ++i) {
-      val^=(static_cast<size_t *>(&subj))[i];
+      val^=((size_t *)(&subj))[i];
     }     
     /* Then, rest. */
     for (size_t j=0; j<numBytes; ++j) {
-      (static_cast<char *>(&val))[j] ^=
-	(static_cast<char *>(&subj))[j+numWords*sizeof(size_t)];
+      ((char *)(&val))[j] ^=
+	((char *)(&subj))[j+numWords*sizeof(size_t)];
     }
+    return val;
   }
 };
 

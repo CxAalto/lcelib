@@ -99,7 +99,7 @@ public:
   SmallHashController(size_t nativeSize): logic(nativeSize), numKeys(0) {}
   
   bool aboutToPut(size_t & nativeSize) const { 
-    nativeSize=logSize;
+    nativeSize=logic::logSize;
     /* Should work even if there was no table, i.e. logSize was 0 */
 
     assert(numKeys <= floor((0.01*maxUsedPerc)*(1 << nativeSize)));
@@ -119,7 +119,7 @@ public:
     
   /* For decreasing the table size after removals. */
   bool trim(size_t & nativeSize) const {
-    nativeSize=logSize;
+    nativeSize=logic::logSize;
     bool retval=false;
     if (nativeSize==0) return false;
     /* DEBUGGED_AS_BULLSHIT */

@@ -41,17 +41,17 @@ protected:
   /** Before swapping or overwriting */
 
   void remove_stage_1(const size_t loc) {
-    assert(loc < sizeByCRTP());
-    weightSum-=weightAt(loc);
-    removeVal(loc);
+    assert(loc < super::sizeByCRTP());
+    weightSum-=super::weightAt(loc);
+    super::removeVal(loc);
     //std::cerr << "In WST:s r_s_1, loc:" << loc << "\n";
   }
 
   void remove_stage_2(const size_t loc) {
-    assert(loc < sizeByCRTP());
-    clearVal(loc);
+    assert(loc < super::sizeByCRTP());
+    super::clearVal(loc);
     //std::cerr << "In WST:s r_s_2, loc:" << loc << "\n";
-    assert(weightAt(loc)==WeightType());
+    assert(super::weightAt(loc)==WeightType());
   }
 
   /* Stage 2 does nothing with ValueTable. */
@@ -59,34 +59,36 @@ protected:
   void setValue(const size_t loc, const ValueType & value) {
     //std::cerr << "Setting:";
     assert(isLegal());
-    WeightType oldWeight=weightAt(loc);
+    WeightType oldWeight=super::weightAt(loc);
     super::setValue(loc, value);
-    weightSum+=(weightAt(loc)-oldWeight);
+    weightSum+=(super::weightAt(loc)-oldWeight);
     assert(isLegal());
   }
 
   void pushAt(const size_t loc) {
-    assert(loc < sizeByCRTP()+1);
-    super::pushAt(loc, sizeByCRTP());
-    clearVal(loc);    
+    assert(loc < super::sizeByCRTP()+1);
+    super::pushAt(loc, super::sizeByCRTP());
+    super::clearVal(loc);    
   }
 
   void pushToTail() {
-    super::pushAt(sizeByCRTP(), sizeByCRTP());
-    clearVal(loc);
+    super::pushAt(super::sizeByCRTP(), super::sizeByCRTP());
+    super::clearVal(super::loc);
   }
 
   void pullFrom(const size_t loc) {
-    assert(loc < sizeByCRTP()); 
-    weightSum-=weightAt(loc);
-    super::pullFrom(loc, sizeByCRTP());
+    assert(loc < super::sizeByCRTP()); 
+    weightSum-=super::weightAt(loc);
+    super::pullFrom(loc, super::sizeByCRTP());
   }
   
 public:
 
   template<bool AutoFinalize>
   class stub:public super::value_stub {
-    friend class MyType;
+    /* I hate this. Results in non-portable code. */
+    //friend class MyType;
+    friend class WeightSumTable<KeyType, ValueType, Policy, Params, Index>;
   private:
     stub() {}
     WeightType oldWeight;
@@ -101,19 +103,19 @@ public:
       //std::cerr << "Finalize. Old sum:" << ((MyType &) target).weightSum;
       //std::cerr << ", old Weight:" << oldWeight;
       //std::cerr << ", new Weight:";
-      WeightType newWeight=((MyType &) target).weightAt(loc);
+      WeightType newWeight=((MyType &) super::target).weightAt(super::loc);
       //std::cerr << newWeight;
-      ((MyType &) target).weightSum+=(newWeight-oldWeight);
+      ((MyType &) super::target).weightSum+=(newWeight-oldWeight);
       //std::cerr << "new sum:" << ((MyType &) target).weightSum << "\n";
       oldWeight=newWeight;
       super::value_stub::_lce_finalize();
-      assert (((MyType &) target).isLegal());
+      assert (((MyType &) super::target).isLegal());
       //std::cerr << "Foo";
     }
 
     void _lce_update() {
-      WeightType newWeight=((MyType &) target).weightAt(loc);
-      ((MyType &) target).weightSum+=(newWeight-oldWeight);
+      WeightType newWeight=((MyType &) super::target).weightAt(super::loc);
+      ((MyType &) super::target).weightSum+=(newWeight-oldWeight);
       oldWeight=newWeight;
       super::value_stub::_lce_update(); 
       //std::cerr << "Updating _with update_";
@@ -146,14 +148,14 @@ public:
     //std::cerr << "Stub in...";
     //std::cerr << "Initing a stub. Old Sum:" << weightSum 
     //      << ", according to super:" << super::weight()
-    //      << ", old weight:" << weightAt(i) << "\n";  
+    //      << ", old weight:" << super::weightAt(i) << "\n";  
 	      
     return stub<true>(*this, i);
   }
   
   WeightSumTable(size_t size=0): super(size), weightSum() {
     /* Might be only needed for assertions. */
-    for (size_t i=0; i<size; ++i) clearVal(i);
+    for (size_t i=0; i<size; ++i) super::clearVal(i);
   };
   
   WeightType weight() const {return weightSum;}

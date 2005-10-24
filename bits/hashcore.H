@@ -823,7 +823,7 @@ public:
     /* An alternative to an end iterator for checking whether 
      * all keys have been iterated through: */
 
-    bool finished() {
+    bool isAtEnd() {
       return (index == target->controller.getTableSize());
     }
 
@@ -909,7 +909,7 @@ public:
     for (;i!=end;i++) {
       if (!this.containsKey(*i)) retval.put(*i);
     }
-    for (iterator j=this->begin(); !j.finished(); j++) {
+    for (iterator j=this->begin(); !j.isAtEnd(); j++) {
       if (!rval.containsKey(*j)) retval.put(*j);
     }
     return *retval;
@@ -923,7 +923,7 @@ public:
     for (;i!=end;i++) {
       retval.put(*i);
     }
-    for (iterator j=this->begin(); !j.finished(); j++) {
+    for (iterator j=this->begin(); !j.isAtEnd(); j++) {
       retval.put(*j);
     }
     return *retval;
@@ -934,7 +934,7 @@ public:
   template<typename OutputType, typename RightOperandType>
   OutputType& operator-(RightOperandType rval) {
     OutputType retval=new OutputType();
-    for (iterator j=this->begin(); !j.finished(); j++) {
+    for (iterator j=this->begin(); !j.isAtEnd(); j++) {
       if (!rval.containsKey(*j)) retval.put(*j);
     }
     return *retval;

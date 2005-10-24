@@ -37,14 +37,12 @@ protected:
   }
 
 public:
-
   bool isUsed(size_t i) {
     assert(i<length);
     return true;
   }
 
-protected:
-  
+protected: 
   void removeAt(const size_t i) {
     super::remove_stage_1(i);
     super::remove_stage_2(i);
@@ -102,7 +100,7 @@ public:
     bool finished() {return loc==target->size();}
 
     void remove() {
-      tgt->removeAt(loc);
+      target->removeAt(loc);
       loc++;
     }
   };

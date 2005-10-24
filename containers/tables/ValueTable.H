@@ -36,7 +36,9 @@ public:
 
   typedef ArrayStub<MyType, ArrayRefStub>  value_stub;
   friend class ArrayRefStub<MyType>;
-  friend class value_stub;
+  /* Bloody hell. This standard relly sucks. */
+  //friend class value_stub;
+  friend class ArrayStub<MyType, ArrayRefStub>;
   typedef typename Policy::WeightType WeightType;
 
   typedef CountWeightPolicy<MyType> DefaultWeightPolicy;
@@ -48,7 +50,7 @@ public:
 
   size_t sizeByCRTP() const {
     //std::cerr << "CRTP:" << ((Index *) this)->getTableSize() << "\n";
-    if (!base_empty()) {
+    if (!super::base_empty()) {
       return ((Index *) this)->getTableSize();
     } else {
       return 0;
@@ -56,7 +58,7 @@ public:
   }
 
   size_t elemsByCRTP() const {
-    if (!base_empty()) {      
+    if (!super::base_empty()) {      
       return ((Index *) this)->size();
     } else {
       return 0;
@@ -78,7 +80,7 @@ private:
   /** Only for the stub. Your friends can access your private parts. */
   value_reference directRefToValue(const size_t slot) {
     assert(slot < sizeByCRTP());
-    return refTo(slot).second();
+    return super::refTo(slot).second();
   }
 
 protected:
@@ -87,32 +89,32 @@ protected:
 
   value_reference refToVal(const size_t loc) {
     //assert(loc < sizeByCRTP());
-    return refTo(loc).second();
+    return super::refTo(loc).second();
   }
 
   const_value_reference constRefToVal(const size_t loc) const {
     //assert(loc < sizeByCRTP());
-    return constRefTo(loc).second();
+    return super::constRefTo(loc).second();
   }
 
   key_reference refToKey(const size_t loc) {
     //assert(loc < sizeByCRTP());
-    return refTo(loc).first();
+    return super::refTo(loc).first();
   }
 
   const_key_reference constRefToKey(const size_t loc) const {
     //assert(loc < sizeByCRTP());
-    return constRefTo(loc).first();
+    return super::constRefTo(loc).first();
   }
 
   WeightType weightAt(const size_t i) const {
-    return Policy::getWeight(constRefTo(i).second());
+    return Policy::getWeight(super::constRefTo(i).second());
   }
 
   /** Needed only by the implicit table */
   
   WeightType & refToWeight(const size_t i) {
-    return Policy::refToWeight(refTo(i).second());
+    return Policy::refToWeight(super::refTo(i).second());
   }
 
   void moveOrSwap(const size_t to, const size_t from) {
@@ -133,13 +135,13 @@ protected:
 
   void removeVal(const size_t loc) {
     //std::cerr << "Removing...";
-    refTo(loc).removeSecond();
+    super::refTo(loc).removeSecond();
     //std::cerr << "Done.\n";
   }
 
   void clearVal(const size_t loc) {
     //std::cerr << "Clearing.";
-    refTo(loc).clearSecond();
+    super::refTo(loc).clearSecond();
     //std::cerr << "Done.\n";
   }
 
@@ -160,7 +162,7 @@ protected:
 
   void final_remove(const size_t loc) {
     //std::cerr << "Final...";
-    refTo(loc).~Pair();
+    super::refTo(loc).~Pair<KeyType, _ValueType>();
     //std::cerr << "Done.";
   }
 
@@ -169,15 +171,16 @@ protected:
 
   void swapVals(const size_t to, const size_t from) {
     ValueType tempValue;
-    memcpy(&tempValue, &directRefTo(to), sizeof(ValueType));
-    memcpy(&directRefTo(to), &directRefTo(from), sizeof(ValueType));
-    memcpy(&directRefTo(from), &tempValue, sizeof(ValueType));
+    memcpy(&tempValue, &super::directRefTo(to), sizeof(ValueType));
+    memcpy(&super::directRefTo(to),
+	   &super::directRefTo(from),sizeof(ValueType));
+    memcpy(&super::directRefTo(from), &tempValue, sizeof(ValueType));
   }
 
   /* The swap itself is inherited. */
 
   size_t weighedSlotSelect(WeightType val) const {
-    assert(!base_empty());
+    assert(!super::base_empty());
     //std::cerr << "WSS. Val:" << val;
     for (size_t i=0; i<sizeByCRTP(); ++i) {
       if (usedByCRTP(i)) 
@@ -185,6 +188,7 @@ protected:
 	else val-=weightAt(i);
     }
     assert(false);
+    return 0;
   }
 
   /** Nothing to do. */

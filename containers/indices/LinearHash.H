@@ -1,5 +1,6 @@
 #ifndef LCE_LINEAR_HASH
 #define LCE_LINEAR_HASH
+#include"../../Randgens.H"
 #include"./TableWithStatus.H"
 #include<cassert> 
 #include<limits>
@@ -129,7 +130,7 @@ private:
     //std::cerr << "Rehashing. Table:";
     //printTable();
     assert(isLegal());
-    disassemble();
+    super::disassemble();
     /* We use the constructor that takes the controller's 
      * native size for the table (might be true size or logarithmic)  
      * instead of the capacity in: */
@@ -141,17 +142,17 @@ private:
      * an empty hash.*/
     if (size()) /* !=0 */ {
       size_t initLoc;
-      for (initLoc=0; isUsed(initLoc); ++initLoc);
+      for (initLoc=0; super::isUsed(initLoc); ++initLoc);
       /* the slot at initLoc is not used, all up to it are */
       for (size_t i=initLoc+1; i<getTableSize(); ++i) {
-	if (isUsed(i)) {
+	if (super::isUsed(i)) {
 	  /* We perform a _direct_ copy that memcopies everything as is. */
 	  rehash_put(i, newHash);
 	}
       }
       /* And then the beginning, all are used */
       for (size_t i=0; i<initLoc; ++i) {
-	assert(isUsed(i));
+	assert(super::isUsed(i));
 	rehash_put(i, newHash);
       }
     }
@@ -161,7 +162,7 @@ private:
     controller=newHash.controller;
     newHash.shallowMoveTo(*this);
     /* Updates done. */ 
-    assemble();
+    super::assemble();
     assert(isLegal());
     //std::cerr << "Done.Table:\n";
     //printTable();
@@ -174,7 +175,7 @@ private:
    */
   void rehash_put(const size_t i, MyType & dest) {
     size_t initLoc=
-      dest.controller.getInitPlace(Policy::getHashValue(constRefToKey(i)));
+      dest.controller.getInitPlace(Policy::getHashValue(super::constRefToKey(i)));
     size_t loc=initLoc;
     while (dest.isUsed(loc)) {
       if (Params::HASH_ORDERED && dest.initPlaceBefore(initLoc, loc)) {
@@ -199,13 +200,14 @@ private:
   
   /** 
    * Convenience. You see. 
+
    *
    * RATIONALE: The policies for arbitrary elements can directly
    * inherit the policies of their KeyTypes.
    */
   
   size_t initPlaceAt(const size_t loc) const {
-    return controller.getInitPlace(Policy::getHashValue(constRefToKey(loc)));
+    return controller.getInitPlace(Policy::getHashValue(super::constRefToKey(loc)));
   }
 
   /**
@@ -223,7 +225,7 @@ private:
    */
 
   size_t initPlaceBefore(const size_t initProbe, const size_t currLoc) const {
-    assert(isUsed(currLoc));
+    assert(super::isUsed(currLoc));
     size_t initAt=initPlaceAt(currLoc);
     bool currRotated=(initAt > currLoc);
     bool probeRotated=(initProbe > currLoc);
@@ -237,12 +239,12 @@ private:
    */
 	   
   void pushProbeAt(const size_t loc) {
-    assert(isUsed(loc));
+    assert(super::isUsed(loc));
     //std::cerr << "Pushing at:" << loc << ". Table:";
     //printTable();
     /* A recursion would be more elegant, I afraid. */
     size_t i=loc;
-    for (; isUsed(i); i=controller.getNextPlace(i));
+    for (; super::isUsed(i); i=controller.getNextPlace(i));
     size_t prev=controller.getPrevPlace(i);
     for (; i!=loc; prev=controller.getPrevPlace(prev)) {
       super::moveOrSwap(i, prev);
@@ -280,7 +282,7 @@ protected:
     size_t currSlot;
     size_t initPlace;
     
-    assert(isUsed(toBeFilled));
+    assert(super::isUsed(toBeFilled));
     
     currSlot=controller.getNextPlace(toBeFilled); 
     
@@ -289,7 +291,7 @@ protected:
     controller.removed();
    
     /* Let us find an element to fill the slot with: */
-    while (isUsed(currSlot)) {
+    while (super::isUsed(currSlot)) {
       initPlace=initPlaceAt(currSlot);
 
       /* Now, we must figure out whether we can use the key 
@@ -314,7 +316,7 @@ protected:
 	
 	/* The superclass can decide wheter */
 	super::moveOrSwap(toBeFilled, currSlot);
-	assert(isUsed(toBeFilled));
+	assert(super::isUsed(toBeFilled));
 	assert(keyFoundAt(toBeFilled));
         toBeFilled=currSlot;
       } /* Else, continue the search. */
@@ -323,8 +325,8 @@ protected:
     /* Observe the order: We do not know what the destructor does, 
      * so we perform the setting only after everthin in place.*/
     super::remove_stage_2(toBeFilled);
-    setAsEmpty(toBeFilled);
-    assert(!isUsed(toBeFilled));
+    super::setAsEmpty(toBeFilled);
+    assert(!super::isUsed(toBeFilled));
   }
    
   /**
@@ -334,7 +336,6 @@ protected:
   LinearHash(size_t capacity=0): 
     super(HashController::sizeForCapacity(capacity)),
     controller(HashController::nativeSizeForCapacity(capacity)) {
-    //std::cerr << "Constructed a linear hash of cap:" << capacity << "\n"; 
       assert(isLegal());
     }  
 	
@@ -351,7 +352,7 @@ protected:
   bool findFirst(const KeyType & key, size_t & location) const {
     /* The table might be uninitialized (size=0). We can, however,
      * check for an empty table with the same work, also: */
-    if (base_empty()) return false;
+    if (super::base_empty()) return false;
     location=controller.getInitPlace(Policy::getHashValue(key));
     //std::cerr << "InitPlace:" << location << "\n"; 
     return findFrom(key, location);
@@ -359,9 +360,9 @@ protected:
   
   bool findFrom(const KeyType & key, size_t & location) const {
     size_t initLoc=location;
-    for (; isUsed(location); location=controller.getNextPlace(location)) {
+    for (; super::isUsed(location); location=controller.getNextPlace(location)) {
       assert(keyFoundAt(location));
-      if (key == constRefToKey(location)) {
+      if (key == super::constRefToKey(location)) {
 	return true; 
       }
       /* The compiler should eliminate the known condition. 
@@ -403,11 +404,11 @@ protected:
     size_t numFound=0;
     if (controller.aboutToPut(oldSize)) rehash(oldSize);   
     size_t initLoc=controller.getInitPlace(Policy::getHashValue(key));    
-    for (location=initLoc; isUsed(location); 
+    for (location=initLoc; super::isUsed(location); 
 	 location=controller.getNextPlace(location)) {
       /* Runtime check for _previous_ validity. */      
       assert(keyFoundAt(location));    
-      if (key == constRefToKey(location)) {
+      if (key == super::constRefToKey(location)) {
 	++numFound;
       } else {
 	/* In the case of an ordered hash tabel, we might want to put the key 
@@ -419,8 +420,8 @@ protected:
 	}
       }
     }
-    refToKey(location)=key;
-    setAsUsed(location);
+    super::refToKey(location)=key;
+    super::setAsUsed(location);
     controller.added();
     return numFound;
   }
@@ -448,12 +449,13 @@ protected:
 	placeToPut(key, location);
 	assert(keyFoundAt(location));
       } else {/* Location already OK. */
-	if (Params::HASH_ORDERED && isUsed(location)) { /* need to push */
+	if (Params::HASH_ORDERED && super::isUsed(location)) {
+	  /* need to push */
 	  //std::cerr << "Foo!";
 	  pushProbeAt(location);
-	} else {assert(!isUsed(location));}
-	refToKey(location)=key;
-	setAsUsed(location);    
+	} else {assert(!super::isUsed(location));}
+	super::refToKey(location)=key;
+	super::setAsUsed(location);    
 	controller.added();
 	//std::cerr << "(3)";
 	assert(keyFoundAt(location));
@@ -467,43 +469,44 @@ protected:
 public:
 
   ~LinearHash() {
-    if (!base_empty()) {
+    if (!super::base_empty()) {
       //std::cerr << "Destroying a non-empty-linear hash:..";
       for (size_t i=0; i<getTableSize(); ++i) {
-	if (isUsed(i)) final_remove(i);
+	if (super::isUsed(i)) super::final_remove(i);
       }
       //std::cerr << "Done. To Super?\n";
     }
   }
 
   void clear() {
-    if (!base_empty()) {
+    if (!super::base_empty()) {
       for (size_t i=0; i<getTableSize(); ++i) {
-	if (isUsed(i)) final_remove(i);
+	if (super::isUsed(i)) super::final_remove(i);
       }
     }
     rehash(0);
-    assemble();
+    super::assemble();
   }
     
   template<typename RandSource>
   KeyType weighedRandKey(RandSource & src=globalRandSource) const {
-    return constRefToKey(weighedRandSlot(src));
+    return super::constRefToKey(weighedRandSlot(src));
   }
 		 
 	
   template<typename RandSource> 
   size_t randSlot(RandSource & src=globalRandSource) const {
     size_t slot;
+
     do {
       slot=src.next(getTableSize());
-    } while (!isUsed(slot));
+    } while (!super::isUsed(slot));
     return slot;
   }
 	         
   template<typename RandSource>
   KeyType randKey(RandSource & src=globalRandSource) const {
-    return constRefToKey(randSlot(src));
+    return super::constRefToKey(randSlot(src));
   }
 
   bool contains(const KeyType & key) const {
@@ -525,6 +528,7 @@ public:
       /* This notifies the controller: */
       removeFrom(loc);
       trim();
+
       return true;
     } else {
       return false;
@@ -574,7 +578,7 @@ public:
     size_t initToKey=i;
     //std::cerr << ":";
     while (true) {
-      if (!isUsed(i)) {
+      if (!super::isUsed(i)) {
 	std::cerr << "Key at " << place << " not to be found. Violation at" 
 		  << i << ". Table:";
 	printTable();
@@ -611,7 +615,7 @@ public:
     if (!super::isLegal()) return false;
     size_t usedCount=0;
     for (size_t i=0; i < getTableSize(); ++i) {
-      if (isUsed(i)) { 
+      if (super::isUsed(i)) { 
 	usedCount++;
 	if (!keyFoundAt(i)) return false;
       }
@@ -630,7 +634,7 @@ public:
     std::cerr << "\n";
     for (size_t i=0; i < getTableSize(); ++i) {
       std::cerr << i;
-      if (isUsed(i)) std::cerr << " " << constRefToKey(i) << " " 
+      if (super::isUsed(i)) std::cerr << " " << super::constRefToKey(i) << " " 
 			       << initPlaceAt(i);
       std::cerr << "\n";
     }
@@ -642,7 +646,9 @@ public:
 
   class const_iterator {
     /** To allow construction */
-    friend class MyType;
+    /* standard suxx: */
+    // friend class MyType;
+    friend class LinearHash<KeyType, ValueType, Policy, Params, Table>; 
   private:
     const_iterator() {};
   protected:
@@ -745,7 +751,9 @@ public:
   
   class iterator {
     /** To allow construction */
-    friend class MyType;
+    /* standard suxx: */
+    // friend class MyType;
+    friend class LinearHash<KeyType, ValueType, Policy, Params, Table>; 
   private:
     iterator() {};
   protected:

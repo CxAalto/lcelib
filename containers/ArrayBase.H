@@ -103,7 +103,7 @@ protected:
   /** Moves data in during the buildup phase */
   
   void initSet(const DataType & src, size_t loc) {
-    memmove(&data[loc], &src, sizeof(dataType));
+    memmove(&data[loc], &src, sizeof(DataType));
   }
   
   void assemble() {}
@@ -374,7 +374,7 @@ public:
   
   class stub {
     /** To allow construction... */
-    friend class MyType;
+    friend class ArrayBase<bool>; /* =MyType;. Standard sux.*/ 
   private:
     /** A direct reference to the data at the slot */
     size_t & slot;
@@ -418,6 +418,10 @@ public:
 protected:
 
   reference refTo(const size_t i) {
+    return stub(*this, i);
+  }
+
+  reference operator[](const size_t i) {
     return stub(*this, i);
   }
 

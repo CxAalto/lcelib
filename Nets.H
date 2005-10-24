@@ -48,9 +48,7 @@ private:
   /** Private methods helping the iterators, stubs etc.  */
   void int_Set(const size_t source,const size_t dest, const EdgeData & value) {
     assert(source != dest);
-    //assert(operator()(source).isLegal());
     //std::cerr << "To int set";
-
     /* The following works regardless of whether we use stubs or not. */
     (&(super::operator[](source)))->setValue(dest,value);
     //std::cerr << "Int set!";
@@ -187,13 +185,15 @@ public:
   };
 
   class Node:public NodeMap::value_stub {
-    friend class MyType;
+    friend class 
+    SymmNet<_EdgeData, EdgeTable, NodeTable, EdgeIndex, NodeIndex>;
+    typedef typename NodeMap::value_stub SuperStub;
     friend class Edge;
     friend class EdgeIter;
     friend class NodeIter;
     const size_t myIndex;
   private:
-    MyType & getNet() {return (MyType &) target;}
+    MyType & getNet() {return (MyType &) SuperStub::target;}
     const MyType & getConstNet() {return getNet().c();}
   protected:
     Node(MyType & net, size_t index): NodeMap::value_stub(net, index),
@@ -205,7 +205,7 @@ public:
       //assert(getConstNet().localLegal(myIndex, i));
       /* This would be the place to prefetch. */
       //std::cerr << "Gettin' edge\n";
-      return Edge(*this, ref(), i);
+      return Edge(*this, SuperStub::ref(), i);
     }
     ~Node() {
       //std::cerr << "Finalizing node stub";
@@ -232,11 +232,13 @@ public:
 
   class NodeIter:public NodeMap::iterator {
   protected:
-    friend class MyType;
+    friend class 
+    SymmNet<_EdgeData, EdgeTable, NodeTable, EdgeIndex, NodeIndex>;
+    typedef typename NodeMap::iterator SuperIter;
     NodeIter(MyType * target):NodeMap::iterator(target)  {}
   public:
     Node value() {
-      return Node(*((MyType *) target), *(*this));
+      return Node(*((MyType *) SuperIter::target), *(*this));
     }
     /* All else OK. */
   };
