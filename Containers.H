@@ -389,6 +389,31 @@ public:
   
   iterator begin() {return iterator(this);}
   const_iterator begin() const {return const_iterator(this);}
+
+  
+  template<typename SourceType>
+  MyType & operator=(const SourceType & src) {
+    clear();
+    //std::cerr << "Pudding:";
+    for (typename SourceType::const_iterator i=src.begin();
+	 !i.finished(); ++i) {
+      //std::cerr << " " << (*i);
+      this->operator[](*i)=i.value();
+    }
+    //std::cerr << "\n";
+    return *this;
+  }
+  
+  template<typename SourceType>
+  MyType & operator+=(const SourceType & src) {
+    //std::cerr << "The put cascade. Source size:" << src.size() << "\n";
+    for (typename SourceType::const_iterator i=src.begin();!i.finished();++i) {
+      this->operator[](*i)+=i.value();
+    }
+    //std::cerr << "Put casc done.\n";
+    return *this;
+  }
+  
 };
 
 
