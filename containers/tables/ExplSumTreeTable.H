@@ -100,6 +100,10 @@ protected:
     super::disassemble();
     //std::cerr << "dizz";
     for (size_t i=0; i<super::sizeByCRTP(); ++i) {
+      if (super::usedByCRTP(i))
+	refToSum(i)=weightAt(i);
+      else
+	refToSum(i)=WeightType();
       refToSum(i)=super::weightAt(i);
     }
   }
@@ -184,8 +188,9 @@ protected:
     }
   } 
 
-  void setValue(const size_t loc, const ValueType & value) {
-    WeightType oldWeight=super::weightAt(loc);
+  void setValue(const size_t loc, const ValueType & value) 
+    WeightType oldWeight=WeightType() 
+    if (super::usedByCRTP(loc)) oldWeight=super::weightAt(loc);
     super::setValue(loc, value);
     this->updateAt(loc, super::weightAt(loc)-oldWeight);
     assert(localLegal(loc));
@@ -289,7 +294,9 @@ protected:
   
   bool localLegal(const size_t loc) const {
     /* Redundant information should be OK. */
-    if (childSum(loc)+super::weightAt(loc)==sumAt(loc)) {
+    WeightType weight=WeightType();
+    if (super::usedByCRTP(loc)) weight=super::weightAt(loc);
+    if (childSum(loc)+weight==sumAt(loc)) {
       return super::localLegal(loc); 
     } else {
       std::cerr << "Sum tree not legal. Loc:" << loc 
