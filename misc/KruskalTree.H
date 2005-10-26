@@ -11,26 +11,26 @@
  *             futher operations considerably
  */
 
-template<typename IndexType=unsigned, bool packTree=true>
+template<bool packTree=true>
 class KruskalTree {
 private:
-  IndexType * fathers;
-  IndexType * clusterSizes; /* Why to use the same type here? 
+  size_t * fathers;
+  size_t * clusterSizes; /* Why to use the same type here? 
 			     * Go figure. */
   KruskalTree() {}; /* Not allowed to be called: 
 		     * only to be initialized to a specified size */ 
   
-  IndexType size;
+  size_t size;
 
 public:
 
   /* This should be self-documentary */
 
-  KruskalTree(IndexType networkSize) {
-    IndexType i;
+  KruskalTree(size_t networkSize) {
+    size_t i;
     size=networkSize;
-    fathers=new IndexType[size];
-    clusterSizes=new IndexType[size];
+    fathers=new size_t[size];
+    clusterSizes=new size_t[size];
 
     for (i=0; i<size; i++) {
       fathers[i]=i; /* Every node is it's own cluster */
@@ -54,12 +54,12 @@ public:
    * nodeIndex   the node...
    * returns     ...and where it belongs to. */
 
-  IndexType getClusterID(const IndexType nodeIndex) const {
+  size_t getClusterID(const size_t nodeIndex) const {
     assert((nodeIndex >= 0) && (nodeIndex < size));
     if (fathers[nodeIndex] == nodeIndex) { /* The root of a subtree */
       return nodeIndex;
     } else { /* Recurse up the tree */
-      IndexType theRoot=getClusterID(fathers[nodeIndex]);
+      size_t theRoot=getClusterID(fathers[nodeIndex]);
       if (packTree) { /* The compiler eliminates this clause based on
 		       * the template parameter. */
 	fathers[nodeIndex]=theRoot; /* A direct link to the root */
@@ -83,12 +83,12 @@ public:
    * from, to    The nodes associated with the edge 
    * returns     Whether a new cluster was formed */
 
-  bool addEdge(const IndexType from, const IndexType to) {
+  bool addEdge(const size_t from, const size_t to) {
     assert((from >= 0) && (from < size));
     assert((to >= 0) && (to < size));
     
-    IndexType fromCluster=getClusterID(from);
-    IndexType toCluster=getClusterID(to);
+    size_t fromCluster=getClusterID(from);
+    size_t toCluster=getClusterID(to);
     
     if (fromCluster==toCluster) {
       return false;
@@ -112,7 +112,7 @@ public:
    * returns        ...and it's size
    */
 
-  IndexType getSubClusterSize(const IndexType clusterIndex) const {
+  size_t getSubClusterSize(const size_t clusterIndex) const {
     assert((clusterIndex >= 0) && (clusterIndex < size));
     return sizes[nodeIndex];
   }
@@ -124,12 +124,35 @@ public:
    * returns     ...and the size of the cluster it belongs to.
    */
 
-  IndexType getClusterSize(const IndexType nodeIndex) const {
+  size_t getClusterSize(const size_t nodeIndex) const {
     /* Assertion included below */
     return clusterSizes[getClusterID(nodeIndex)];
   }
 };  
 
- 
+template<bool packTree=true>
+class BiDirKruskalTree: public KruskalTree<packTree> {
+public:
+  typedef KruskalTree<packTree> super;
+  typedef BiDirKruskalTree<packTree> MyType;
+private:
+  bool * InTheNet;
+  BiDirKruskalTree() {}
+public:
+  BiDirKruskalTree(size_t size): super(size) {
+    InTheNet=new bool[size];
+  }
+
+  bool addEdge(const size_t from, const size_t to) { 
+    InTheNet[from]=true;
+    if (InTheNet[to]) return super::addEdge(from,to);
+    return false;
+  }
+
+  ~BiDirKruskalTree() {
+    delete[] InTheNet;
+  }
+};
+  
 
 
