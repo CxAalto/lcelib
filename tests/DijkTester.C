@@ -33,8 +33,17 @@ private:
   
   /* Variable needed for pointer syntax */
   
-  struct RouteType; /* Imperfect. See following for details */
-  RouteType currRoute;
+  struct FooRouteType {
+    WeightType weight;
+    size_t dest;
+    
+    size_t getDest() const {
+      return dest;
+    }
+    WeightType getWeight() const {return weight;}
+  };
+
+  FooRouteType currRoute;
   
   bool done;
   
@@ -55,7 +64,7 @@ public:
   /* Standard destructor should be fine. */
 
   MyType & operator++() {
-    RouteType newRoute;
+    FooRouteType newRoute;
     assert (!done); /* Iteration not completed. */
     /* Iterate through the current node's siblings */
     for (EdgeIter iter=myNet(currRoute.getDest()).begin();
@@ -84,23 +93,14 @@ public:
     return (*this);
   }
 
-  const RouteType & operator*() const {
+  const FooRouteType & operator*() const {
     assert (!done);
     return currRoute;
   }
   
   bool finished() const {return done;}
     
-  struct RouteType {
-    WeightType weight;
-    size_t dest;
-    
-    size_t getDest() const {
-      return dest;
-    }
-    WeightType getWeight() const {return weight;}
-  };
-};
+ };
 
 
 unsigned getNodeIndex(int index) {

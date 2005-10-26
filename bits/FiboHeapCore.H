@@ -188,7 +188,7 @@ private:
 	 * as the size of the degree list is logarithmic to
 	 * the data size. */
 	if (tempnode->degree >= degreeListSize) {
-	  tempnodes=new (NodeType*)[degreeListSize*2];
+	  tempnodes=new NodeType * [degreeListSize*2];
 	  for (unsigned i=0; i< degreeListSize; i++) {
 	    tempnodes[i+degreeListSize]=0;
 	    tempnodes[i]=degreeList[i];
@@ -256,7 +256,7 @@ public:
   FiboHeapCore() {
     numElems=0;
     degreeListSize=10;
-    degreeList=new (NodeType*)[degreeListSize];
+    degreeList=new NodeType * [degreeListSize];
     for (unsigned i=0; i<degreeListSize; i++) degreeList[i]=0;
     root=0; /* null, but this is the C Doublecross (tm) -style */
   }

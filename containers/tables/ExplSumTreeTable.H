@@ -101,7 +101,7 @@ protected:
     //std::cerr << "dizz";
     for (size_t i=0; i<super::sizeByCRTP(); ++i) {
       if (super::usedByCRTP(i))
-	refToSum(i)=weightAt(i);
+	refToSum(i)=super::weightAt(i);
       else
 	refToSum(i)=WeightType();
       refToSum(i)=super::weightAt(i);
@@ -188,8 +188,8 @@ protected:
     }
   } 
 
-  void setValue(const size_t loc, const ValueType & value) 
-    WeightType oldWeight=WeightType() 
+  void setValue(const size_t loc, const ValueType & value) {
+    WeightType oldWeight=WeightType(); 
     if (super::usedByCRTP(loc)) oldWeight=super::weightAt(loc);
     super::setValue(loc, value);
     this->updateAt(loc, super::weightAt(loc)-oldWeight);

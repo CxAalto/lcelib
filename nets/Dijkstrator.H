@@ -61,8 +61,11 @@ template <typename NetworkType,
 class Dijkstrator {
   typedef typename Policy::WeightType WeightType;
   typedef Dijkstrator<NetworkType, Policy, HeapType> MyType;
-  
-  struct RouteEnds; /* Incomplete. See below. */
+
+  struct RouteEnds {
+    size_t source;
+    size_t dest;
+  };
 
   typedef HeapType<WeightType, RouteEnds> MyHeapType;
   typedef typename MyHeapType::NodeType HeapNodeType;
@@ -79,7 +82,17 @@ private:
   
   /* Variable needed for pointer syntax */
   
-  struct RouteType; /* Imperfect. See following for details */
+      
+  struct RouteType {
+    WeightType weight;
+    RouteEnds ends;
+    
+    size_t getDest() const {return ends.dest;}
+    size_t getSource() const {return ends.source;}
+    WeightType getWeight() const {return weight;}
+  };
+
+
   RouteType currRoute;
 
   bool done;
@@ -179,22 +192,6 @@ public:
   }
   
   bool finished() const {return done;}
-
-
-  struct RouteEnds {
-    size_t source;
-    size_t dest;
-  };
-
-    
-  struct RouteType {
-    WeightType weight;
-    RouteEnds ends;
-    
-    size_t getDest() const {return ends.dest;}
-    size_t getSource() const {return ends.source;}
-    WeightType getWeight() const {return weight;}
-  };
 
   const Set<size_t> & getFoundSet() const {
     return found;

@@ -393,7 +393,7 @@ public:
   
   template<typename SourceType>
   MyType & operator=(const SourceType & src) {
-    clear();
+    super::clear();
     //std::cerr << "Pudding:";
     for (typename SourceType::const_iterator i=src.begin();
 	 !i.finished(); ++i) {
