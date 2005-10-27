@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstring>
 #include <cstdlib>
+#include <memory>
 //#include <../PrefetchPolicy.H>
 
 /** 
@@ -140,8 +141,8 @@ public:
     if (size>0) {
       data=(DataType *) malloc(sizeof(DataType)*size);
       if (data==0) {
-	std::cerr << "Failed in the allocation, table:" << size << ", elem:" 
-		  << sizeof(DataType) << "\n";
+	//std::cerr << "Failed in the allocation, table:" << size << ", elem:" 
+	//  << sizeof(DataType) << "\n";
       } else {
 	DataType initVal;
 	for (size_t i=0; i<size; ++i) {
