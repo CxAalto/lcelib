@@ -237,6 +237,7 @@ public:
       while (true) {
 	if (!bins[currBin].empty()) {
 	  if (bins[currBin] < nextYearStart) {
+	    //std::cerr << "\n";
 	    break; 
 	  } else {
 	    ++numFutEvsAcc;
@@ -249,6 +250,7 @@ public:
 	  // std::cerr << "New year, next starting at:" 
 	  //           << nextYearStart << "\n";
 	}
+	//std::cerr << "#";
       }
       bins[currBin].prefetch();
     }
@@ -332,9 +334,9 @@ public:
     popCounter++;
 
     if (__builtin_expect(popCounter == queue.getNumBins(),0)) { /* Time to check */      
-      std::cerr << "Checking for resize. Probe len avg:";
-      std::cerr << ((float) popProbeLenSum/queue.getNumBins()) << ", future avg:";
-      std::cerr << ((float) popFutureEventSum/queue.getNumBins()) << "\n"; 
+      //std::cerr << "Checking for resize. Probe len avg:";
+      //std::cerr << ((float) popProbeLenSum/queue.getNumBins()) << ", future avg:";
+      //std::cerr << ((float) popFutureEventSum/queue.getNumBins()) << "\n"; 
             
       int numBinsLogChange=0;
       int yearLenLogChange=0;
@@ -343,18 +345,18 @@ public:
       /* Bin size -loop. */
       while ((popProbeLenSum >> (queue.getLogNumBins() -1
 				 + binSizeLogChange)) == 0) {
-	std::cerr << "#"; 
+	//std::cerr << "#"; 
 	binSizeLogChange--;
       }
-      std::cerr << "Here";
+      //std::cerr << "Here";
       /* Up: */
       while ((popProbeLenSum >> (queue.getLogNumBins() -1
 				 + binSizeLogChange)) > 3) { 
 	binSizeLogChange++;
       }
 
-      std::cerr << "There. Bin size log change:" << binSizeLogChange 
-		<< "\n";
+      //std::cerr << "There. Bin size log change:" << binSizeLogChange 
+      //	<< "\n";
 
       /* Year length -loop. Down: */
       if (popFutureEventSum != 0) {
@@ -364,23 +366,23 @@ public:
 	}
 	while ((popFutureEventSum >> (queue.getLogNumBins()
 				      -3+yearLenLogChange)) > 3) {
-	  std::cerr << "Y len loop. Comp val:"
-		    << (queue.getLogNumBins()-2+yearLenLogChange) << "\n";
+	  // std::cerr << "Y len loop. Comp val:"
+	  //    << (queue.getLogNumBins()-2+yearLenLogChange) << "\n";
 	  yearLenLogChange++;
 	}
-	std::cerr << "Y len log ch:" << yearLenLogChange << ",bin sz log ch:"
-		  << binSizeLogChange << "\n";
+	//std::cerr << "Y len log ch:" << yearLenLogChange << ",bin sz log ch:"
+	//  << binSizeLogChange << "\n";
 	numBinsLogChange=yearLenLogChange-binSizeLogChange;
-      }
+      } 
 
       if (binSizeLogChange || numBinsLogChange) {
 	std::cerr << "Calqueue resize. Bin size:" 
-		  << (1 << (queue.getLogBinSize()+binSizeLogChange))
-		  << ", numBins:"
-		  << (1 << (queue.getLogNumBins()+numBinsLogChange)) << "\n"; 
+	  << (1 << (queue.getLogBinSize()+binSizeLogChange))
+	  << ", numBins:"
+	  << (1 << (queue.getLogNumBins()+numBinsLogChange)) << "\n"; 
 	queue.resize(queue.getLogBinSize()+binSizeLogChange,
 		     queue.getLogNumBins()+numBinsLogChange);
-	std::cerr << "Done.";
+	//std::cerr << "Done.";
       }
       /* In any case: */
       popProbeLenSum=0;

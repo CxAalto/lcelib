@@ -187,7 +187,7 @@ protected:
 	if (val<weightAt(i)) return i;
 	else val-=weightAt(i);
     }
-    assert(false);
+    assert(false); /* Empty container? */
     return 0;
   }
 

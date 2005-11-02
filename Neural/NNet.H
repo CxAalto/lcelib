@@ -25,13 +25,31 @@
  *                  the commit-op
  */
 
-template<typename TimeType>
+template<typename DelayType=unsigned, typename StrengthType=float>
 class SynBase {
 protected:
-  size_t target;
-  TimeType delay;
+  DelayType xmitDelay;
+  unsigned target;
+  StrengthType strength;
 public:
-  operator size_t() {return target;}
+  SynBase(unsigned tgt, DelayType delay=0, StrengthType str=0): 
+    xmitDelay(delay), target(tgt), strength(str) {} 
+  unsigned key() {return target;} /* Immutable */
+  StrengthType & value() {return strength;}
+  DelayType delay() {return xmitDelay;}
+}
+
+template<typename TimeType typename DelayType=unsigned, 
+	 typename StrengthType=float>
+class STDPSynBase: public SynBase<DelayType, StrengthType> {
+  
+
+
+
+  
+
+public:
+  operator unsigned() {return target;}
   TimeType getDelay() {return delay;}
 };
 
@@ -43,18 +61,19 @@ public:
   }
 };
 
+class ActPotBase<>
+
 /**
  * This should allow for copying of neuron _types_ in a portable 
  * manner. IsVirtual is true here; partial specialization exists for the 
  * false (non-virtual) case. Uses EBCO: RTFM.
  */
 
-template<bool IsVirtual, typename SynBase, typename EventBase> 
+template<bool IsVirtual, typename Synapse, typename EventBase> 
 class AxonBase {
   typedef AxonBase<true, SynBase, EventBase> MyType;
-  void getTypeFrom(MyType & source) {
-    std::memcpy(this, &src, sizeof(MyType));
-  }
+ 
+  
 
   virtual SynBase & operator[](size_t i) {
     assert(false);
@@ -89,27 +108,30 @@ class AxonBase<false> {
   void getTypeFrom(AxonBase<false> & src) {}
 };
 
-template<typename Synapse, typename NetworkType, typename EventQueue> 
-class Axon: public AxonBase<NetworkType::IsVirtual,
-			    Synapse::Base,
-			    NetworkType::EventBase> {
-  typedef NetworkType::TimeType TimeType;
-  typedef NetworkType::EventBase EventBase;
+class NeuronBase<bool isVirtual> {
+  
+}
+
+template<typename Synapse, bool > 
+class NeuronBase {
 protected:
   Synapse * axon=null;
-  size_t numSynapses;
+  unsigned numSynapses;
 public:
 
-  template<typename SynType>
-  void setType(SynType & source) {
-    getTypeFrom(Axon<SynType, NetworkType, EventQueue>());
-  }
+
 
   void assemble() {
-    std::sort(axon, &axon[numOut], SynSorter<SynType>());
+    std::sort(axon, &axon[numOut], SynSorter<Synapse>());
   }
 
   size_t size() const {return numSynapses;}
+
+  
+
+};
+
+
 
   class ActPot::public NetworkType::EventBase {
   protected:
@@ -154,7 +176,6 @@ public:
     ((Synapse *) loc).postZap(time); 
   }
 
-};
 
 template<typename SynBase, NeuronBase, 
 
@@ -265,6 +286,8 @@ public:
   }
   
  } 
+
+
 
 
 #endif

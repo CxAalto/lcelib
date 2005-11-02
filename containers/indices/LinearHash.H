@@ -493,7 +493,6 @@ public:
     return super::constRefToKey(weighedRandSlot(src));
   }
 		 
-	
   template<typename RandSource> 
   size_t randSlot(RandSource & src=globalRandSource) const {
     size_t slot;
