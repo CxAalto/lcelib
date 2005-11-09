@@ -135,13 +135,12 @@ bool ConnectivityCheck(NetType & theNet) {
   for (; !paths.finished(); ++paths) {
   }
  
-  /* Check whether all other nodes were reachable */ 
+  /* Check whether all other nodes were reachable */
+  assert( paths.getFoundSet().size() <= theNet.size() );
   if (paths.getFoundSet().size() == theNet.size() )
     return true;
-  else if (paths.getFoundSet().size() < theNet.size() )
-    return false; 
   else
-    assert(false); 
+    return false;
 }
 //  <---- ConnectivityCheck
 
