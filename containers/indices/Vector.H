@@ -81,7 +81,7 @@ public:
 
   template<typename RandSource>
   KeyType weighedRandKey(RandSource & src=globalRandSource) const {
-    return super::constRefToKey(weighedRandSlot(src));
+    return weighedRandSlot(src);
   }	     
 
   class iterator {
