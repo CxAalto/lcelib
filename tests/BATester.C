@@ -12,7 +12,7 @@ RandNumGen<> globalRandGen=RandNumGen<>();
 
 
 int main() {
-  typedef SymmNet<bool>/*, ValueTable, ExplSumTreeTable>*/ NetType;
+  typedef SymmNet<bool, ValueTable, ExplSumTreeTable> NetType;
   NetType theNet(NET_SIZE);
   std::cerr << "Constructing the seed";
   size_t i;

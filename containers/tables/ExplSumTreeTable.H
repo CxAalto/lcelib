@@ -204,17 +204,18 @@ public:
     /* Blah. */
     //friend class MyType;
     friend class ExplSumTreeTable<KeyType, ValueType, Policy, Params, Index>;
+    typedef typename super::value_stub super_stub;
   private:
     stub() {} /* Not to be called: always bound to a slot. */
     WeightType oldWeight;
 
     void _int_lce_update() {
       WeightType diff=
-	((MyType &) super::target).weightAt(super::loc)-oldWeight;
+	((MyType &) super_stub::target).weightAt(super_stub::loc)-oldWeight;
       //std::cerr << "FI";
       if (diff != WeightType()) { /* Did change. */
 	//std::cerr << "IN";
-	((MyType &) super::target).updateAt(super::loc, diff);
+	((MyType &) super_stub::target).updateAt(super_stub::loc, diff);
 	//std::cerr << "OUT";
 	//assert(((MyType &) target).localLegal(loc));
       }
@@ -222,7 +223,7 @@ public:
 
   protected:
     stub(MyType & tgt, const size_t i):
-      super::value_stub(tgt, i), 
+      super_stub(tgt, i), 
       oldWeight(tgt.weightAt(i)) {
       //std::cerr << "Stubified..";
       //std::cerr << "Stubify at:" << i << ", oldWeight:" << oldWeight
@@ -231,33 +232,34 @@ public:
 
     void _lce_update() {
       _int_lce_update(); 
-      oldWeight=((MyType &) super::target).weightAt(super::loc);
-      super::value_stub::_lce_update();
+      oldWeight=((MyType &) super_stub::target).weightAt(super_stub::loc);
+      super_stub::_lce_update();
     }
 
     void _lce_finalize() {
       _int_lce_update();
-      super::value_stub::_lce_finalize();
+      super_stub::_lce_finalize();
     } 
     
     bool _lce_upToDate() {
-      if (oldWeight != ((MyType &) super::target).weightAt(super::loc)) {
+      if (oldWeight != 
+	  ((MyType &) super_stub::target).weightAt(super_stub::loc)) {
 	return false;
       } else {
-	return super::value_stub::_lce_upToDate();
+	return super_stub::_lce_upToDate();
       }
     }
     
   public:
     
     ValueType & operator=(const ValueType & src) {
-      return super::value_stub::operator=(src);
+      return super_stub::operator=(src);
     }
 
     template<typename SourceType> 
     ValueType & operator=(const SourceType & src) {
       //std::cerr << "Copy constructing a _Stub_";
-      return super::value_stub::operator=(src);
+      return super_stub::operator=(src);
     }
 
     ~stub() {

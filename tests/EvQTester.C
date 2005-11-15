@@ -1,5 +1,5 @@
 
-#define NDEBUG
+//#define NDEBUG
 //#define GNU_PREFETCH
 
 #include <iostream>
@@ -40,6 +40,7 @@ typedef tst Event;
 typedef Event * EventPtr;
 
 int main() {
+  assert(false);
   std::cerr << sizeof(Event) << " " << sizeof(tst);
   EvQueue<TimeType> queue(0,20);
 #ifndef  NDEBUG

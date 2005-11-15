@@ -104,6 +104,8 @@ protected:
 
   const_key_reference constRefToKey(const size_t loc) const {
     //assert(loc < sizeByCRTP());
+    //std::cerr << "cRTK:" << loc 
+    //      << "," << (super::constRefTo(loc).first()) << "\n";
     return super::constRefTo(loc).first();
   }
 
@@ -181,7 +183,7 @@ protected:
 
   size_t weighedSlotSelect(WeightType val) const {
     assert(!super::base_empty());
-    //std::cerr << "WSS. Val:" << val;
+    //std::cerr << "WSS. Val:" << val << "\n";
     for (size_t i=0; i<sizeByCRTP(); ++i) {
       if (usedByCRTP(i)) 
 	if (val<weightAt(i)) return i;
@@ -224,12 +226,12 @@ public:
   
   WeightType weight(size_t len) const {
     WeightType retval=WeightType();
-    //std::cerr << "Weights:\n";
+    //std::cerr << "Start:" << retval << "Weights:\n";
     for (size_t i=0; i<len; ++i) {
       if (usedByCRTP(i))
 	retval+=Policy::getWeight(constRefToVal(i));
       //std::cerr << i << ":";
-      //std::cerr << Policy::getWeight(constRefToVal(i));
+      //std::cerr << Policy::getWeight(constRefToVal(i)) << " " << retval;
       //std::cerr << "\n";
     }
     return retval;
@@ -250,6 +252,8 @@ public:
   template<typename RandSource>
   size_t weighedRandSlot(RandSource & src=globalRandSource) const {
     WeightType value=src.next(this->weight());
+    //std::cerr << "Val for select:" << value << "\n";
+    //std::cerr << "Slot:" << weighedSlotSelect(value) << "\n";
     return weighedSlotSelect(value);
   }
   
