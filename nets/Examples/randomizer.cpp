@@ -8,15 +8,34 @@ randomizes the network keeping the degree distribution intact,
 and writes the network to standard output in the same format. 
 
 
-The function randomize() (currently found in lcelib/nets/Randomizer.H )
-does the randomization part. For more detailed info, see the comments 
-above the function randomize() in Randomizer.H.
+Note: with assertions off, Dijkstrator runs in O(N logN) time,
+otherwise O(N^2).  Randomizer uses Dijkstator, so turn assertions
+off for larger networks.
 
-                                                                                      
+The function randomize() (currently found in lcelib/nets/Randomizer.H)
+does the randomization part.  One round consists of making L switches,
+where L is the number of links in the network (a switch means swapping
+the end nodes of two edges). The number of rounds is given as input.
+
+It is important to keep the network connected. Since checking the
+connectivity of the whole network is very time consuming, we use an
+adaptive procedure. It is based on the fact that a component that
+becomes disconnected in a switch is generally very small.
+
+After switching two edges, we run Dijkstrator from each of them to
+see whether a small component broke apart from the network.  The
+parameter 'limit' determines how far from the starting node we will
+look. If a disconnection is detected, the switch is immediately
+reversed, and we try a different switch.  
+
+For more detailed info, see the comments above the function
+randomize() in Randomizer.H.
+
+
                                             
 To compile:     g++ -O -Wall randomizer.cpp -o randomizer
 
-To run:         cat net.edg | ./randomizer <switches> <limit> <randseed>  > netr.edg
+To run:         cat net.edg | ./randomizer <rounds> <limit> <randseed>  > netr.edg
 
 Example:        cat net.edg | ./randomizer 100 15 0 > netr.edg
 
@@ -24,7 +43,7 @@ Example:        cat net.edg | ./randomizer 100 15 0 > netr.edg
 
 
 //#define DEBUG  // for debugging code to be run 
-// #define NDEBUG // to turn assertions off
+#define NDEBUG // to turn assertions off
 
 #include <vector>
 #include <cassert>
