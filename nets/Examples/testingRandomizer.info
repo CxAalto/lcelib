@@ -142,7 +142,7 @@ randomization.
            3        1570
 
 
-3-clique-communities for net1L:
+3-clique-communities for net1L (one round):
 
      3   874
      4   214
@@ -174,7 +174,7 @@ randomization.
 
 
 
-3-clique-communities for net2L:
+3-clique-communities for net2L (two rounds):
 
      3   248
      4    40
@@ -191,7 +191,7 @@ randomization.
     61     1
 
 
-3-clique-communities for net5L:
+3-clique-communities for net5L (five rounds):
 
      3   113
      4     5
@@ -200,22 +200,22 @@ randomization.
 
 
 
-3-clique-communities for net10L:
+3-clique-communities for net10L (10 rounds):
 
      3    64
      4     1
 
-3-clique-communities for net20L:
+3-clique-communities for net20L (20 rounds):
 
      3    76
 
 
-3-clique-communities for net50L:
+3-clique-communities for net50L (50 rounds):
 
      3    94
 
 
-3-clique-communities for net100L:
+3-clique-communities for net100L (100 rounds):
 
      3    83
      4     1

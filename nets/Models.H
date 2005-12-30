@@ -72,7 +72,7 @@
 
 // Seed network options:
 // --------------------
-enum SeedType {RANDOM, CLIQUE}; // RANDOM: Erdös-Renyi random network
+enum SeedType {RANDOM, CLIQUE, CHAIN, RING}; // RANDOM: Erdös-Renyi random network
                                 // CLIQUE: fully connected network
 SeedType seedType = CLIQUE; // Defaults to fully connected seed.
 

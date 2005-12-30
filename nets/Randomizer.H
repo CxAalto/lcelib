@@ -1,7 +1,7 @@
 
 // lcelib/nets/Randomizer.H  
 // 
-// Authors: Jussi Kumpula, Riitta Toivonen
+// Authors: Jussi Kumpula, Jukka-Pekka Onnela, Riitta Toivonen
 
 
 
@@ -224,23 +224,33 @@ void randomize(NetType & net, Generator & generator, size_t rounds, size_t limit
 
    After switching two edges, we run Dijkstrator from each of them to
    see whether a small component broke apart from the network.  The
-   parameter 'limit' determines how far from the starting node we will
-   look. If a disconnection is detected, the switch is immediately
-   reversed, and we try a different switch.  
+   parameter 'limit' determines to how many nodes we will try to find
+   a path to from the starting node. If a disconnection is detected,
+   the switch is immediately reversed, and we try a different switch.
 
-   After L switches, we make a connectivity check for the full
+   After L switches, we make a full connectivity check for the
    network.  If the network is found to be disconnected, we retrieve a
    backup of the network and redo the round. The parameter 'limit' is
-   increased to make the probability of disconnection less likely on
-   the next round. If the network is found to be connected, the
-   parameter 'limit' has a small probability of decreasing. The
-   connectivity checking is thereby optimized.
-   
+   increased to make disconnection less likely on the next round. If
+   the network is found to be connected, the parameter 'limit' has a
+   small probability of decreasing (this probability is hard-coded). 
+   The connectivity checking is thereby optimized. 
+
+   Tests for answering the question 'How many rounds of scrambling should we do?'
+   can be found in
+      nets/Examples/testingRandomizer.info 
+      nets/Examples/testingRandomizer.eps
+
+   Starting with a network with strong community structure, we mixed
+   it with randomizer different numbers of times, and detected all
+   communities from the networks.  When community structure is 
+   eliminated, we may assume that the network is properly scrambled.
+
    10 rounds should be adequate, 100 rounds plentiful. For the
    'limit' parameter, 15 is a good starting point. 
 
-   Adaptive algorithm design and coding by Jussi and JP, composition
-   of function and comments by Riitta
+   Adaptive algorithm design and coding by JP and Jussi, composition
+   of function, comments and tests by Riitta.
   */
  
 
