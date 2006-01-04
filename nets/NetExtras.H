@@ -39,12 +39,14 @@
  outputEdgesAndWeights  (Nov 9 2005, Riitta)
  copyNet                (Jussi) 
  numberOfEdges          (Jussi) 
+ numberOfTriangles      (Jan 4 2006, Riitta) 
  ConnectivityCheck      (Riitta)
  ClearNet               (Riitta)
 
 
-Feel free to add whatever useful bits you have that 'belong to this category'!
-(a reasonable amount of testing expected)
+
+Feel free to add whatever useful bits you have that belong to this category.
+A reasonable amount of testing is expected.
 
 Suggestions, corrections etc. also welcomed. 
 
@@ -317,6 +319,45 @@ size_t numberOfEdges(NetType & net) {
 
 
 
+/* function numberOfTriangles*/
+/* calculates the number of triangles in the network */
+template<typename NetType>
+size_t numberOfTriangles(NetType & net) {
+
+  size_t trianglesum=0;
+  
+  // Go through each node in the network:
+  for (size_t i=0; i<net.size(); ++i) {
+    
+    // Go through the neighbors of node i:
+    for (typename NetType::const_edge_iterator j=net(i).begin();
+	 !j.finished();
+	 ++j) {
+      
+      for (typename NetType::const_edge_iterator k=net(*j).begin();
+	   !k.finished();
+	   ++k) {
+	if (net(*k)[i] != 0) {
+	  trianglesum++;
+	}
+      }
+    }
+  }
+  
+  return trianglesum/6; // each triangle was counted 6 times 
+}
+// <--- numberOfTriangles
+//  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -385,6 +426,33 @@ void ClearNet(NetType& theNet, size_t netSize) {
   }
 }
 //  <---- ClearNet   
+
+
+
+
+
+
+
+
+
+template<typename NetType>
+size_t findMaxDegree(NetType& theNet) {
+  size_t kmax = 0;
+  for (size_t i=0; i<theNet.size(); ++i) {
+    size_t curr_deg=theNet(i).size(); // Read the degree of node i
+    if (kmax < curr_deg ) {
+      kmax = curr_deg;
+    }
+  }
+  return kmax;
+}
+//  <----   findMaximumDegree 
+
+
+
+
+
+
 
 
 #endif //~ NETEXTRAS_H 
