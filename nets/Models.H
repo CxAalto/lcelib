@@ -11,8 +11,9 @@
 #include "models/HolmeKim.H" 
 #include "models/ErdosRenyi.H" 
 #include "models/CommunityNet.H"  // old version currently in lcelib/nets/OldModels.H
-// #include "models/BA.H" //Jussi will write this one
-// #include "models/BBV.H"  // write this one - old version currently in lcelib/nets/OldModels.H
+#include "models/BBV.H" 
+// #include "models/BA.H" // perhaps Jussi will write this one
+
 
 #endif //~ MODELS_H
 
