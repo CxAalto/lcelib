@@ -22,6 +22,31 @@ Tested as follows:  ...
 #ifndef BBV_H
 #define BBV_H
 
+#include "../../Containers.H"
+#include "../../Nets.H"
+#include "../../Randgens.H"
+#include <cassert>
+#include <iostream>
+#include <vector>
+#include <sstream>
+#include <string>
+#include <ctime>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // bbvNet --->
