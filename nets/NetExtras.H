@@ -219,8 +219,6 @@ void outputEdgesAndWeights(NetType& theNet) {
 
 
 
-
-
 /*  function outputEdges(NetType& theNet)                                       
     Prints to std::cout the edges of the network in the format                  
     SOURCE DEST                                                                 
@@ -320,7 +318,9 @@ size_t numberOfEdges(NetType & net) {
 
 
 /* function numberOfTriangles*/
-/* calculates the number of triangles in the network */
+/* calculates the number of triangles in the network 
+   (tested on 3-clique, 4-clique, and chain - gives correct answers 1, 4, 0)
+*/
 template<typename NetType>
 size_t numberOfTriangles(NetType & net) {
 
@@ -447,6 +447,12 @@ size_t findMaxDegree(NetType& theNet) {
   return kmax;
 }
 //  <----   findMaximumDegree 
+
+
+
+
+
+
 
 
 

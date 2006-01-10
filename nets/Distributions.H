@@ -183,14 +183,14 @@ void outputDistributions1(NetType& theNet, size_t kmax) {
     if there is a node with degree k, it has a clustering coefficient and a nn-degree
      (except clustering is not defined for k=1, and it becomes NaN, not a number). */
   
-  for (size_t i=1; i<kmax+1; ++i)  std::cout <<  n_k[i]  << " ";
+  for (size_t i=1; i<kmax+1; ++i)  std::cout << " " <<  n_k[i]  ;
   std::cout << "\n";
   
   //    for (size_t i=1; i<kmax; ++i)  std::cout <<  ((float) trisumx2_k[i]) / i / (i-1) / n_k[i]   << " ";                         
-  for (size_t i=1; i<kmax+1; ++i)  std::cout <<   trisumx2_k[i] / i / (i-1)   << " ";
+  for (size_t i=1; i<kmax+1; ++i)  std::cout  << " " <<   trisumx2_k[i] / i / (i-1)  ;
   std::cout << "\n";
   
-  for (size_t i=1; i<kmax+1; ++i)  std::cout <<   nndegsum_k[i] / i  << " ";
+  for (size_t i=1; i<kmax+1; ++i)  std::cout   << " " <<   nndegsum_k[i] / i;
   std::cout << "\n";
   
   /* Sum up the distributions from each iteration in Matlab and divide by niter. */
@@ -213,7 +213,7 @@ void outputDistributions1(NetType& theNet, size_t kmax) {
 
 
 
-/*  void outputDistributions2(NetType& theNet, size_t kmax)
+/*  void outputDistributions2(NetType& theNet)
        Print out the distributions: 
          In the first column, degrees of each node 
          In the next column, trix2/k/(k-1) for each node 
@@ -223,7 +223,7 @@ void outputDistributions1(NetType& theNet, size_t kmax) {
 
 
 template<typename NetType>
-void outputDistributions2(NetType& theNet, size_t kmax) {
+void outputDistributions2(NetType& theNet) {
   
   
   /* Degrees, clustering and nearest neighbor degree (in the same loop for efficiency) */
