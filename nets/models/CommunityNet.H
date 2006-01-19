@@ -124,9 +124,9 @@ Add a new node until network has grown to desired size:
 #include <iostream>
 #include <sstream>
 #include <ctime>
-#include "/u/rtoivone/c++/lcelib/Containers.H"
-#include "/u/rtoivone/c++/lcelib/Nets.H"
-#include "/u/rtoivone/c++/lcelib/Randgens.H"
+#include "../../Containers.H"
+#include "../../Nets.H"
+#include "../../Randgens.H"
 #include "../NetExtras.H"   
 #include "SeedNet.H" 
 
