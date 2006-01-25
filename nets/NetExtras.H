@@ -181,6 +181,88 @@ SymmNet<EdgeDataType>* readNet()
 
 
 
+// readNet2 ------------------------------->
+// This is almost a direct copy of the readNet-function.
+// However, this function can handle all kinds of networks, for example  
+// SymmNet<EdgeData, ValueTable, ExplSumTreeTable>.
+// Furthermore, this function can read files which do not specify
+// the weights (set parameter weights=0). If weights are given set parameter
+// weights=1.  Also, files which contain on their first line some headers
+// etc. can be read by setting himmeli=1, so that the first line is ignored.
+// 
+// call example:
+// std::auto_ptr<NetType> netPointer(readNet2<NetType>(1,0));
+// NetType& net = *netPointer;  // Create a reference for easier handling of net.
+
+template<typename NetType>
+NetType * readNet2(const size_t weights, const size_t himmeli)
+{
+  typedef typename NetType::EdgeData EdgeDataType;
+  
+  std::vector<size_t> edgeSource;
+  std::vector<size_t> edgeDest;
+  std::vector<EdgeDataType> edgeData;
+  size_t nodeCount = 0;
+
+  if (himmeli) {                   // first line in himmeli edge data file has to be skipped
+    std::string line;
+    std::getline(std::cin, line);  // Read a line from input and discard it...
+  }
+
+  while (std::cin) {
+
+    size_t source, dest;
+    EdgeDataType data;
+    std::string line;
+    std::getline(std::cin, line);   // Read a line from input into a string.
+    if (!line.empty()) {
+      std::istringstream is(line);  // Extract data using a stringstream.
+      is >> source;
+      is >> dest;
+      if (weights) is >> data;      // if weights are given use them
+      else data=1;                  // else set all weights to 1
+      if (!is) {
+	std::cerr << "\nError in reading input.\n"
+		  << "Possibly a line containing too few values, or a header line.\n\n"; 
+	exit(1); 
+      }
+
+      // Track the maximum node index.
+      if (source >= nodeCount)
+	nodeCount = source + 1;
+      if (dest >= nodeCount)
+	nodeCount = dest + 1;
+      
+      edgeSource.push_back(source);
+      edgeDest.push_back(dest);
+      edgeData.push_back(data);
+    }
+  }
+
+  // Construct the net.
+  std::auto_ptr<NetType> netPointer(new NetType(nodeCount));
+  NetType& net = *netPointer;  // Create a reference for easier access.
+  
+  // Add edges to the net.
+  for (size_t i = 0; i < edgeSource.size(); ++i) {
+    size_t source = edgeSource.at(i);
+    size_t dest = edgeDest.at(i);
+    EdgeDataType data = edgeData.at(i);
+    
+    if (source != dest && !net(source).contains(dest)) {
+      net[source][dest] = data;
+      assert(net[source][dest] == data);
+    }
+  }
+  
+  return netPointer.release(); // release the pointer so that it is not destroyed
+			       // (we want to return it)
+}
+// <---------------- readNet2 --------------------------
+
+
+
+
 
 
 
@@ -240,6 +322,7 @@ void outputEdges(NetType& theNet) {
 }
 // <--- outputEdges                                                             
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -           
+
 
 
 
@@ -452,11 +535,46 @@ size_t findMaxDegree(NetType& theNet) {
 
 
 
+// -------- find_k_core ------------>
+// finds the k-core of the network. This should be the most central part
+// the network in some sense. The algorithm takes away all nodes which have
+// less than k neighbors so that in the remaining network all nodes have at least
+// k neigbors. If you don't want to mess up your original network do a copy of it
+// and run find_k_core on the copy.
 
+template<typename NetType>
+void find_k_core(NetType & theNet, size_t k) {
 
+  if (k < 1) {
+    std::cerr << "K-core degree limit too small, exiting...\n";
+    exit(-1);
+  }
+  
+  std::cerr << "Finding " << k << "-core...\n";
+  std::cerr << "Rounds\t Min degree \t Edges remaining \n"; 
+  size_t minDegree, currDegree;
+  size_t i;
+  size_t netSize = theNet.size();
+  size_t rounds = 0;
 
+  do {
+    for (i=0; i<netSize; ++i) { // check all nodes in the network
+      if (theNet(i).size() < k) {  // remove all links from nodes which have degree less than k
+	for (typename NetType::edge_iterator j=theNet[i].begin(); !j.finished(); ++j)  j.value() = 0; // remove edge i - > j
+      }
+    }
 
-
+    // find minimum degree in the net
+    minDegree = findMaxDegree(theNet);
+    for (i=0; i<netSize; ++i) {
+      currDegree = theNet(i).size();
+      if (currDegree < minDegree && currDegree > 0) minDegree = theNet(i).size();
+    }
+    ++rounds;
+    std::cerr << rounds << "\t" << minDegree << "\t" << numberOfEdges(theNet)  << "\n";
+  } while (minDegree < k && minDegree > 0);  // do this as long as small degree nodes remain
+}
+// <-------- find_k_core ------------
 
 
 
