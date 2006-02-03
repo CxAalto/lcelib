@@ -7,6 +7,7 @@
 
 #include "NetExtras.H"   
 #include "Distributions.H" 
+#include "models/SimpleNets.H" 
 #include "models/SeedNet.H" 
 #include "models/HolmeKim.H" 
 #include "models/ErdosRenyi.H" 
