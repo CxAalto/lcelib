@@ -16,7 +16,7 @@
  Clique                 (added Jan 4 2006, Riitta) 
  Chain                  (added Jan 4 2006, Riitta) 
  Ring                   (added Jan 4 2006, Riitta) 
-
+ Star                   (added Feb 8 2006, Riitta)  
 Feel free to add whatever useful bits you have that belong to this category.
 A reasonable amount of testing is expected.
 
@@ -50,6 +50,26 @@ void Clique(NetType& net) {
 }
 // <--- Clique                                                      
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -           
+
+
+
+
+
+  template<typename NetType> 
+  void Star(NetType& net) {
+#ifdef DEBUG
+    std::cerr << "Forming star network. Links: \n";
+#endif // DEBUG 
+    for (size_t i=1; i<net.size(); ++i) {
+      net[0][i]=1;
+#ifdef DEBUG
+      std::cerr << "\t" << 0 << " to " << i << "\n";
+#endif // DEBUG 
+    }
+  }
+
+// <--- Star
+//  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
 
