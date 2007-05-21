@@ -8,17 +8,28 @@
  Functions included:  
  ---------------
 
- ErdosRenyi(netSize,k_ave,generator,optional:w0) 
+ ErdosRenyi(net,netSize,k_ave,generator,optional:w0) 
 
     A version of the Erdos-Renyi model where the number of nodes N and
     their average degree k_ave are given as input. The number of edges
     is then calculated as N * k_ave and rounded upwards. Edges are
     placed randomly between vertex pairs. If a weight w0 is given, all
-    edges will have weight w0. Feel free to write an improved version,
-    or the version where the probability of an edge existing between a
-    vertex pair is given as input :-)
+    edges will have weight w0. 
+
+
+ ErdosRenyi2(net,p,generator,optional:w0)
+
+   A version of the Erdos-Renyi model where the probability of an edge
+   existing between a vertex pair is given as input If a weight w0 is
+   given, all edges will have weight w0.
+   Note: If NetType is SymmNet<bool>, any edge weights w0 which differ
+   from zero are converted to true without warning.  For example, if
+   the variable net is of type SymmNet<bool>, a function call
+   ErdosRenyi(net, netSize, k_ave, generator, 0.4) will generate a
+   network with unweighted edges, ignoring the '0.4'.
 
 */
+
 
 
 
@@ -75,6 +86,36 @@ void ErdosRenyi(NetType& net, size_t netSize, float k_ave, Generator & generator
 
 
 
+
+
+// ErdosRenyi2 ---->
+/*   A version of the Erdos-Renyi model where the probability of an
+edge existing between a vertex pair is given as input If a weight w0
+is given, all edges will have weight w0.
+
+ Note: If NetType is SymmNet<bool>, any edge weights w0 which differ
+ from zero are converted to true without warning.  For example, if the
+ variable net is of type SymmNet<bool>, a function call
+ ErdosRenyi(net, netSize, k_ave, generator, 0.4) will generate a
+ network with unweighted edges, ignoring the '0.4'.
+*/
+
+template<typename NetType, typename Generator>
+void ErdosRenyi2(NetType& net, float p, Generator & generator, typename NetType::EdgeData w0=1) {
+  
+  size_t N=net.size();
+  ClearNet(net,N); /* make sure there are no edges present to start with */
+  
+  for(size_t i=0; i<N; ++i) {
+    for(size_t j=i+1; j<N; ++j) { 
+      // float toss=generator.nextNormed(); // a random number uniformly from [0,1)
+      if( generator.nextNormed() < p) { // create the link with prob p
+	net[i][j]=w0; /* add edge between nodes i and j */
+      }
+    }
+  }
+}
+// <---- ErdosRenyi2
 
 
 #endif //~ ERDOSRENYI_H
