@@ -594,6 +594,56 @@ void outputOverlap(NetType & net, bool integerOutput=false) {
 
 
 
+/* pearsonCoeff  (Jussi) */
+
+/* function pearsonCoeff
+
+Calculates the Pearson correlation coefficient of the degrees
+of neighbouring nodes.
+
+*/
+
+template <typename NetType>
+float pearsonCoeff(NetType & net) {
+
+  const size_t netSize = net.size();
+  float r = 0;
+  size_t term1=0, term2=0, term3=0;
+  size_t curr_deg, neigh_deg, linkNum = 0;
+
+  // Go through each node in the network:
+  for (size_t i=0; i<netSize; ++i) {
+
+    curr_deg=net(i).size(); // Read the degree of node i
+
+    // Go through the neighbors of node i:
+    for (typename NetType::const_edge_iterator j=net(i).begin(); !j.finished(); ++j) {
+      if ( *j > i ) {
+        ++linkNum;
+        neigh_deg = net(*j).size();
+        term1 += curr_deg * neigh_deg;
+        term2 += curr_deg + neigh_deg;
+        term3 += curr_deg*curr_deg + neigh_deg*neigh_deg;
+      }
+    }
+  }
+
+  float t1, t2, t3;
+  t1 = term1/((float) linkNum);
+  t2 = 0.5*term2/((float) linkNum);
+  t2 = t2*t2;
+  t3 = 0.5*term3/((float) linkNum);
+
+  if (t3-t2 != 0)
+    r = (t1-t2)/(t3-t2);
+  else
+    r = 0;
+
+  return r;
+}
+
+// <--- pearsonCoeff
+//  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
 
 
 
