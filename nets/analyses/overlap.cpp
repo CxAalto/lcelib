@@ -23,8 +23,8 @@ To run:         cat net.edg | ./overlap 1 > overlap.txt
 
 
 
-#define DEBUG  // for debugging code to be run 
-//#define NDEBUG // to turn assertions off 
+//#define DEBUG  // for debugging code to be run 
+#define NDEBUG // to turn assertions off 
 
 
 
