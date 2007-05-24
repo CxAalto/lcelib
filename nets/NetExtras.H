@@ -36,15 +36,19 @@
  ------------------  
 
  readNet                (added Dec 6 2005, Riitta)
+ readNet3                (added Aug 16 2006, Jussi)
+ readNet4               (2006 Riitta ?)
  outputEdges            (Nov 9 2005, Riitta)
  outputEdgesAndWeights  (Nov 9 2005, Riitta)
+ outputEdgesAndWeights2  (Aug 16 2006, Jussi)
  copyNet                (Jussi) 
  numberOfEdges          (Jussi) 
  numberOfTriangles      (Jan 4 2006, Riitta) 
  ConnectivityCheck      (Riitta)
  ClearNet               (Riitta)
  outputOverlap          (April 4 2006, Riitta)
-
+ shuffle                (added Sept 14 2006, Riitta) 
+ overlap                (added Sept 14 2006, Riitta)  
 
 Feel free to add whatever useful bits you have that belong to this category.
 A reasonable amount of testing is expected.
@@ -158,14 +162,14 @@ SymmNet<EdgeDataType>* readNet()
       exit(1);
     }
     if (net(source).contains(dest)) {
-      std::cerr << "\nInput file contains same edge twice.\n\n";
-      exit(1);
+      std::cerr << "\nInput file contains same edge twice (edge "<< source <<"-"<< dest<<"). ";
+      std::cerr << "Using the latter weight data.";
     }
     net[source][dest] = data;
     assert(net[source][dest] == data);
   }
   
-  std::cerr << "\nreadNet: read in " << nodeCount << " nodes and ";
+  std::cerr << "\n\nreadNet: read in " << nodeCount << " nodes and ";
   std::cerr << edgeSource.size() << " links.\n";
   std::cerr << "Reading data complete.\n\n";
   
@@ -196,8 +200,8 @@ SymmNet<EdgeDataType>* readNet()
 // NetType& net = *netPointer;  // Create a reference for easier handling of net.
 
 template<typename NetType>
-NetType * readNet2(const size_t weights, const size_t himmeli)
-{
+NetType * readNet2(const size_t weights, const size_t himmeli){
+
   typedef typename NetType::EdgeData EdgeDataType;
   
   std::vector<size_t> edgeSource;
@@ -268,6 +272,196 @@ NetType * readNet2(const size_t weights, const size_t himmeli)
 
 
 
+// readNet3 ------------------------------->
+// This file reads the network from a specified file, not standard in
+//  use the option 'himmeli' = 1 if Himmeli headers in the edge file, 0 otherwise
+template<typename NetType>
+NetType * readNet3(const size_t weights, const size_t himmeli, char * fileName)
+{
+  typedef typename NetType::EdgeData EdgeDataType;
+  
+  std::vector<size_t> edgeSource;
+  std::vector<size_t> edgeDest;
+  std::vector<EdgeDataType> edgeData;
+  size_t nodeCount = 0;
+  
+  std::string line;
+  std::ifstream myfile(fileName);
+  if (myfile.is_open()) {
+    
+    if (himmeli) {                   // first line in himmeli edge data file has to be skipped
+      getline(myfile,line);
+    }
+    
+    while (!myfile.eof()) {
+      
+      size_t source, dest;
+      EdgeDataType data;
+      getline(myfile, line);   // Read a line from input into a string.
+      if (!line.empty()) {
+	std::istringstream is(line);  // Extract data using a stringstream.
+	is >> source;
+	is >> dest;
+	if (weights) is >> data;      // if weights are given use them
+	else data=1;                  // else set all weights to 1
+	if (!is) {
+	  std::cerr << "\nError in reading input.\n"
+		    << "Possibly a line containing too few values, or a header line.\n\n"; 
+	  exit(1); 
+	}
+	
+	// Track the maximum node index.
+	if (source >= nodeCount)
+	  nodeCount = source + 1;
+	if (dest >= nodeCount)
+	  nodeCount = dest + 1;
+	
+	edgeSource.push_back(source);
+	edgeDest.push_back(dest);
+	edgeData.push_back(data);
+      }
+    }
+    
+    myfile.close();
+    
+    // Construct the net.
+    std::auto_ptr<NetType> netPointer(new NetType(nodeCount));
+    NetType& net = *netPointer;  // Create a reference for easier access.
+    
+    std::cerr << nodeCount << "\n";
+    
+    // Add edges to the net.
+    for (size_t i = 0; i < edgeSource.size(); ++i) {
+      size_t source = edgeSource.at(i);
+      size_t dest = edgeDest.at(i);
+      EdgeDataType data = edgeData.at(i);
+      
+      if (source != dest && !net(source).contains(dest)) {
+	net[source][dest] = data;
+	assert(net[source][dest] == data);
+      }
+    }
+    
+    return netPointer.release(); // release the pointer so that it is not destroyed
+    // (we want to return it)
+  }
+}
+
+// <---------------- readNet3 --------------------------
+
+
+
+
+
+
+
+
+
+
+
+// readNet4 ------------------------------->
+// This file reads the network from a specified file, not standard in
+// (wrote this since readNet3 wouldn't compile with my compiler - Aug 18 2006 Riitta)
+template<typename NetType>
+NetType * readNet4(const size_t weights, const size_t himmeli, char * fileName)
+{
+  typedef typename NetType::EdgeData EdgeDataType;
+  
+  
+  
+  std::vector<size_t> edgeSource;
+  std::vector<size_t> edgeDest;
+  std::vector<EdgeDataType> edgeData;
+  size_t nodeCount = 0;
+  
+  
+  std::string line;
+  std::ifstream myfile(fileName);
+  //if (myfile.is_open()) {
+  
+  if (himmeli) {                   // first line in himmeli edge data file has to be skipped
+    getline(myfile,line);
+  }
+  while (!myfile.eof()) {
+    
+    size_t source, dest;
+    EdgeDataType data;
+    getline(myfile, line);   // Read a line from input into a string.
+    if (!line.empty()) {
+      std::istringstream is(line);  // Extract data using a stringstream.
+      is >> source;
+      is >> dest;
+      if (weights) is >> data;      // if weights are given use them
+      else data=1;                  // else set all weights to 1
+      if (!is) {
+	std::cerr << "\nError in reading input.\n"
+		  << "Possibly a line containing too few values, or a header line.\n\n"; 
+	exit(1); 
+      }
+      
+      // Track the maximum node index.
+      if (source >= nodeCount)
+	nodeCount = source + 1;
+      if (dest >= nodeCount)
+	  nodeCount = dest + 1;
+      
+      edgeSource.push_back(source);
+      edgeDest.push_back(dest);
+	edgeData.push_back(data);
+    }
+  }
+  myfile.close();
+  
+    
+  
+  
+  // Construct the net.
+  std::auto_ptr<NetType> netPointer(new NetType(nodeCount));
+  NetType& net = *netPointer;  // Create a reference for easier access.
+  
+  
+  //  std::cerr << nodeCount << "\n";
+  
+  // Add edges to the net.
+  for (size_t i = 0; i < edgeSource.size(); ++i) {
+    size_t source = edgeSource.at(i);
+    size_t dest = edgeDest.at(i);
+    EdgeDataType data = edgeData.at(i);
+    
+    if (source == dest) {     
+      std::cerr << "\nInput file contains a loop edge.\n\n";
+      exit(1);
+    }
+    if (net(source).contains(dest)) {
+      std::cerr << "\nInput file contains same edge twice (edge "<< source <<"-"<< dest<<"). ";
+      std::cerr << "Using the latter weight data.";
+    }
+    net[source][dest] = data;
+    assert(net[source][dest] == data);
+  }
+  
+  std::cerr << "\n\nreadNet: read in " << nodeCount << " nodes and ";
+  std::cerr << edgeSource.size() << " links.\n";
+  std::cerr << "Reading data complete.\n\n";
+  
+  return netPointer.release(); // release the pointer so that it is not destroyed
+  // (we want to return it)
+}
+
+// <---------------- readNet4 --------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
                                                               
 /*  function outputEdgesAndWeights(NetType& theNet)                             
     Prints to std::cout the edges and weights of the network in the format      
@@ -329,6 +523,36 @@ void outputEdges(NetType& theNet) {
 
 
 
+
+
+
+
+
+
+                                       
+/*  function outputEdgesAndWeights2(NetType& theNet, const size_t logWeights=0, 
+std::ofstream & myfile = std::cout)
+    Prints  the edges and weights of the network in the format      
+    SOURCE DEST WEIGHT                                                          
+*/                                                       
+template<typename NetType>                                                      
+void outputEdgesAndWeights2(NetType& theNet, const size_t logWeights=0, 
+std::ofstream & myfile = std::cout) {                                   
+  
+  // Print out edges and weights of the network (source dest weight):           
+  for (size_t i=0; i<theNet.size(); ++i) {                                      
+    for (typename NetType::const_edge_iterator j=theNet(i).begin();             
+         !j.finished(); ++j) {                                                  
+      if (i<(*j))                                                               
+        if (logWeights)                                              
+          myfile << i <<  "\t" << (*j) << "\t" << log(j.value()) << "\n";       
+        else
+          myfile << i <<  "\t" << (*j) << "\t" << j.value() << "\n";   
+    }                                                                           
+  }                                                                             
+}             
+// <--- outputEdgesAndWeights2
+//  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -           
 
 
 
@@ -644,6 +868,145 @@ float pearsonCoeff(NetType & net) {
 
 // <--- pearsonCoeff
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+
+
+
+
+
+
+
+/*
+ function double clustering(typename NetType net, size_t i) 
+ Calculates the unweighted clustering coefficient for a 
+ given node in the given network.
+
+ Returns -1 if the degree of the node is less than 2, 
+ since in this case clustering is not defined for it.
+
+ Tested by hand with small networks. 
+
+*/
+
+template<typename NetType>
+double clustering(NetType & net, const size_t i) {
+  
+  if ( (i<0) ||  ( i>=net.size() ) ) {std::cerr << "In the function calculating clustering: Node index exceeds network size or is negative \n\n"; exit(-1); } 
+
+  size_t k=net(i).size(); // node degree
+  if (k<2) return -1; /* clustering not defined for degree > 2 , returning -1 
+			 (careful when calculating averages!!!) */
+  else {
+    size_t trianglesum_x2=0;
+    // Go through the neighbors of node i:
+    for (typename NetType::const_edge_iterator j=net(i).begin(); !j.finished(); ++j) {
+      // ...and check if some of their neighbors are also neighbors of node i.    
+      // If yes, increase the triangle counter. 
+      for (typename NetType::const_edge_iterator k=net(*j).begin(); !k.finished(); ++k) {
+	if (net(*k)[i] != 0) {
+	  trianglesum_x2++;
+	}
+      }
+    }
+    return (double) trianglesum_x2 / k / (k-1); 
+  }
+}
+// <--- clustering
+//  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* shuffle   (Sept 14 2006, Riitta) */
+
+/*
+Shuffles a given vector in linear time (produces a random permutation).
+
+The algorithm: 
+Go through the elements in order from index 0 to N-1. Swap the element 
+in place i with one of the remaining elements (in places (i+1)...N). 
+This produces a uniform distribution. 
+(Note that swapping each element with an element in ANY of the N places 
+does NOT produce a uniform distribution.)
+
+Tested with small vectors (~ 10 elements) that the probability of 
+element i ending up in place j is 1/N. 
+Sep 13 2006, Riitta
+*/
+
+
+template<typename elementType, typename Generator>
+void shuffle(std::vector<elementType> & order, Generator & generator) {
+  
+  size_t N=order.size();
+  for (size_t i=0; i<N; ++i) { 
+    /* this is the old way which produces biased results: 
+    size_t toss=generator.next(N); // an index uniformly randomly from [0,N)    */
+    /* and here's the new, correct way: */
+    size_t toss=generator.next(N-i)+i; // an index uniformly randomly from [i,N)
+    // std::cerr << "tossed index from " << 0+i << "..." << N-1 << "\n";
+    // swap i'th element with the tossed element
+    size_t temp=order.at(i);
+    order.at(i)=order.at(toss);
+    order.at(toss)=temp;
+  }
+  
+  // print out the order for testing:
+  //  for  (size_t i=0; i<order.size(); ++i) {  std::cerr << order.at(i)  << "\n"; };
+}
+// <--- shuffle
+//  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
+
+
+
+
+/*  double overlap(NetType & net, size_t i, size_t j) 
+Calculates the overlap for a given edge in the given network. 
+Tested by hand for a small network (see overlapTest.cpp
+for a program that reads in a net and outputs the overlap
+for each edge, but tested nets not included in the file)
+
+April 26 2006, Riitta
+*/
+
+template <typename NetType>
+double overlap(NetType & net, size_t i, size_t j) {
+  assert( i < net.size() );
+  assert( j < net.size() );
+  size_t ki=net(i).size();
+  size_t kj=net(j).size();
+  if ( (ki < 2) && (kj < 2) ) { 
+    std::cerr << "Overlap for edge " << i << "-" << j << " not defined, returning -1. Careful with averaging!\n";
+    return (double) -1;
+  }
+  else {
+    // count the common neighbors of i and j                                           
+    size_t nij=0;
+    for (typename NetType::const_edge_iterator k=net(j).begin();
+	 !k.finished();
+	 ++k) {
+      if (net(*k)[i] != 0) {
+	nij++;
+      }
+    }
+    // calculate and return the overlap 
+    double overlap_ij = (double) nij / ( (double) (ki - 1 + kj - 1 - nij) );
+    return overlap_ij;
+  }
+}
+
+
 
 
 
