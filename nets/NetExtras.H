@@ -16,10 +16,12 @@
 #include "../Nets.H"
 #include "../Randgens.H"
 #include "Dijkstrator.H"
+#include "../misc/KruskalTree2.H"
 
 #include <cassert>
 #include <iostream>
 #include <vector>
+#include <map>
 #include <sstream>
 #include <string>
 #include <ctime>
@@ -38,6 +40,7 @@
  readNet                (added Dec 6 2005, Riitta)
  readNet3                (added Aug 16 2006, Jussi)
  readNet4               (2006 Riitta ?)
+ readNet_mutual         (June 7 2007, Lauri)
  outputEdges            (Nov 9 2005, Riitta)
  outputEdgesAndWeights  (Nov 9 2005, Riitta)
  outputEdgesAndWeights2  (Aug 16 2006, Jussi)
@@ -49,6 +52,8 @@
  outputOverlap          (April 4 2006, Riitta)
  shuffle                (added Sept 14 2006, Riitta) 
  overlap                (added Sept 14 2006, Riitta)  
+ findLargestComponent   (added June 14 2007, Jussi)
+ collapseIndices        (added June 14 2007, Lauri)
 
 Feel free to add whatever useful bits you have that belong to this category.
 A reasonable amount of testing is expected.
@@ -181,11 +186,6 @@ SymmNet<EdgeDataType>* readNet()
 
 
 
-
-
-
-
-
 // readNet2 ------------------------------->
 // This is almost a direct copy of the readNet-function.
 // However, this function can handle all kinds of networks, for example  
@@ -237,7 +237,7 @@ NetType * readNet2(const size_t weights, const size_t himmeli){
 	nodeCount = source + 1;
       if (dest >= nodeCount)
 	nodeCount = dest + 1;
-      
+
       edgeSource.push_back(source);
       edgeDest.push_back(dest);
       edgeData.push_back(data);
@@ -265,6 +265,150 @@ NetType * readNet2(const size_t weights, const size_t himmeli){
 }
 // <---------------- readNet2 --------------------------
 
+
+
+
+/*
+// readNet_mutual -------------------------------> 
+//
+// This is almost a direct copy of the readNet2-function.  However,
+// this function reads a directed network and saves it as an
+// undirected network where a link between i and j exist only if both
+// links (i,j) and (j,i) exist in the original network. The weigh of
+// the new undirected link is the average of the weights of the
+// directed links.
+// 
+// call example:
+// std::auto_ptr<NetType> netPointer(readNet_mutual<NetType>(1,0));
+// NetType& net = *netPointer;  // Create a reference for easier handling of net.
+
+template<typename NetType>
+NetType * readNet_mutual(const size_t weights, const size_t himmeli)
+{
+
+  typedef typename NetType::EdgeData EdgeDataType;
+  typedef std::vector<EdgeDataType> WeightVector;
+
+  std::map<size_t, std::vector<size_t> > edgeMap;
+
+  std::vector<size_t> edgeSource;
+  std::vector<size_t> edgeDest;
+  std::vector<EdgeDataType> edgeData;
+  size_t nodeCount = 0;
+
+  if (himmeli) // first line in himmeli edge data file has to be skipped
+    {                   
+      std::string line;
+      std::getline(std::cin, line);  // Read a line from input and discard it...
+    }
+
+  while (std::cin)
+    {
+
+      size_t source, dest;
+      EdgeDataType data;
+      std::string line;
+      std::getline(std::cin, line);   // Read a line from input into a string.
+      
+      if (!line.empty())
+	{
+	  std::istringstream is(line);  // Extract data using a stringstream.
+	  is >> source;
+	  is >> dest;
+	  if (weights) is >> data;      // if weights are given use them
+	  else data=1;                  // else set all weights to 1
+	  if (!is) {
+	    std::cerr << "\nError in reading input.\n"
+		      << "Possibly a line containing too few values, or a header line.\n\n"; 
+	    exit(1); 
+	  }
+	  
+	  // Track the maximum node index.
+	  if (source >= nodeCount)
+	    nodeCount = source + 1;
+	  if (dest >= nodeCount)
+	    nodeCount = dest + 1;
+	  
+	  // Check if a link has been already read in reverse direction.
+	  bool edge_found = false;
+	  size_t vector_index = 0;
+	  std::map<size_t, std::vector<size_t> >::iterator edgemapiter = edgeMap.find(dest);
+	  if ( edgemapiter != edgeMap.end() )
+	    {
+	      for (std::vector<size_t>::iterator veciter = (edgemapiter->second).begin();
+		   veciter != (edgemapiter->second).end();
+		   veciter++)
+		{
+		  if (*veciter == source)
+		    {
+		      edge_found = true;
+		      break;
+		    }
+		  vector_index++;
+		}
+	    }
+	  
+	  // Add edge to network if it was found to exist in both directions.
+	  // Otherwise add edge to map.
+	  if (edge_found)
+	    {
+	      edgeSource.push_back(dest);
+	      edgeDest.push_back(source);
+	      
+	      // Calculate average weight
+	      std::map<size_t, std::vector<EdgeDataType> >::iterator weightmapiter = weightMap.find(dest);
+	      assert(weightmapiter != weightMap.end());
+	      edgeData.push_back(0.5*(data + (weightmapiter->second).at(vector_index)));
+	    }
+	  else
+	    {
+	      // Add new node to map. If source was not found in edgeMap,
+	      // it must be added to the map. Otherwise we may just extend
+	      // the old vectors in the map with a new destination.
+	      if ( edgemapiter == edgeMap.end() )
+		{	  
+		  std::vector<size_t> edge_vec;
+		  std::vector<EdgeDataType> weight_vec;
+		  edge_vec.push_back(dest);
+		  weight_vec.push_back(data);
+		  edgeMap[source] = edge_vec;
+		  weightMap[source] = weight_vec;
+		}
+	      else
+		{
+		  (edgeMap[source]).push_back(dest);
+		  (weightMap[source]).push_back(data);
+		}
+	      
+	    }
+	  
+	} // End if (!line.empty())
+
+    } // End while (std::cin)
+
+  // Construct the net.
+  std::auto_ptr<NetType> netPointer(new NetType(nodeCount));
+  NetType& net = *netPointer;  // Create a reference for easier access.
+  
+  // Add edges to the net.
+  for (size_t i = 0; i < edgeSource.size(); ++i)
+    {
+      size_t source = edgeSource.at(i);
+      size_t dest = edgeDest.at(i);
+      EdgeDataType data = edgeData.at(i);
+    
+      if (source != dest && !net(source).contains(dest))
+	{
+	  net[source][dest] = data;
+	  assert(net[source][dest] == data);
+	}
+    }
+  
+  return netPointer.release(); // release the pointer so that it is not destroyed
+			       // (we want to return it)
+}
+// <---------------- readNet_mutual --------------------------
+*/
 
 
 
@@ -345,6 +489,8 @@ NetType * readNet3(const size_t weights, const size_t himmeli, char * fileName)
     return netPointer.release(); // release the pointer so that it is not destroyed
     // (we want to return it)
   }
+
+  return 0;
 }
 
 // <---------------- readNet3 --------------------------
@@ -770,16 +916,19 @@ void ClearNet(NetType& theNet, size_t netSize) {
 
    This function was tested on a small network generated by hand and
    on a fully connected network.
+
+   If printAverage is set to true, the last line of the output will
+   read "AVG <O>". (Added by Lauri Kovanen, 25.5.2007)
 */
 template<typename NetType>
-void outputOverlap(NetType & net, bool integerOutput=false) {
+void outputOverlap(NetType & net, bool integerOutput=false, bool printAverage = false) {
 
   size_t ki=0;
   size_t kj=0;
   size_t nij=0;
   double overlap=0;
-
-
+  double overlap_avg=0;
+  size_t nan_count=0;
 
   // Go through each node in the network:                                                  
   for (size_t i=0; i<net.size(); ++i) {
@@ -801,6 +950,7 @@ void outputOverlap(NetType & net, bool integerOutput=false) {
         }
 	// calculate and print out the overlap                                                 
 	overlap= (double) nij / ( (double) (ki - 1 + kj - 1 - nij) );
+	isnan(overlap) ? nan_count++ : overlap_avg += overlap;
 	if (integerOutput==false) {
 	  std::cout << i <<   " " << (*j) <<  " " << overlap <<  "\n"; 
 	}
@@ -810,6 +960,9 @@ void outputOverlap(NetType & net, bool integerOutput=false) {
       }
     }
   }
+
+  if (printAverage)
+      std::cout << overlap_avg/(numberOfEdges(net)-nan_count) << "\n";
 }
 
 
@@ -1007,7 +1160,99 @@ double overlap(NetType & net, size_t i, size_t j) {
 }
 
 
+template<typename NetType>
+NetType * findLargestComponent(NetType & net)
+{
+  
+  // find the largest component
+  const size_t netSize = net.size();
+  KruskalTree<true> kpuu(netSize);
+  for (size_t source=0; source<netSize; ++source) {
+    for (typename NetType::const_edge_iterator target=net(source).begin(); !target.finished(); ++target) {
+      if ( *target > source) 	kpuu.addEdge(source,*target);
+    }
+  }
+  // std::cerr << kpuu.getClusterID(10) << "\t" <<  kpuu.getClusterSize(10) << "\n";
+  size_t giantSize = 0;
+  size_t currentClusterSize;
+  size_t maxClusterIndex = 0;
+  size_t node = 0;
+  while (giantSize < netSize/2 && node < netSize) {
+    currentClusterSize = kpuu.getClusterSize( node );
+    if ( currentClusterSize > giantSize ) {
+      maxClusterIndex = kpuu.getClusterID( node );
+      giantSize = currentClusterSize;
+    }
+    ++node;
+  }
+  if ( giantSize <= netSize/2 ) std::cerr << "Largest component less than half of the whole network!\n";
+  else std::cerr << "Largest component size is: " << giantSize << "\n";
+  
+  // Construct the net.
+  std::auto_ptr<NetType> netPointer(new NetType(giantSize));
+  NetType& net2 = *netPointer;  // Create a reference for easier access.
 
+  size_t newIndexes[netSize];
+  size_t counter=0;
+  // 
+  for (size_t source=0; source<netSize; ++source) {
+    if ( kpuu.getClusterID(source) == maxClusterIndex ) {
+      newIndexes[source] = counter;                        // rename nodes which belong to giant component
+      counter++;
+    }
+  }
+  
+  // counter should be now giantSize;
+  if (counter != giantSize) std::cerr << "Something wrong with largest component!\n";
+  for (size_t source=0; source<netSize; ++source) {
+    if ( kpuu.getClusterID(source) == maxClusterIndex ) {
+      for (typename NetType::const_edge_iterator target=net(source).begin(); !target.finished(); ++target) {
+	if ( kpuu.getClusterID(*target) == maxClusterIndex ) {
+	  net2[newIndexes[source]][newIndexes[*target]] = net(source)[*target]; // these nodes belong to same cluster
+	}
+      }
+    }
+  }
 
+  return netPointer.release(); // release the pointer so that it is not destroyed
+
+}
+
+/* collapseIndices
+
+Collapses the indices of a network so that they run from 0 to N, where
+N is the number of links in the network.
+*/
+
+template<typename NetType>
+NetType * collapseIndices(NetType & net)
+{
+  std::map<size_t, size_t> nodeIDmap;
+  size_t counter = 0;
+
+  // Create a map of nodes that really exist.
+  for (size_t i = 0; i < net.size(); i++)
+    {
+      if ( net(i).size() > 0)
+	{
+	  nodeIDmap[i] = counter;
+	  counter++;
+	}
+    }
+
+  // Construct the net.
+  std::auto_ptr<NetType> netPointer(new NetType(nodeIDmap.size()));
+  NetType& net2 = *netPointer;  // Create a reference for easier access.
+
+  for (size_t i = 0; i < net.size(); i++)
+    {
+      for (typename NetType::const_edge_iterator j = net(i).begin(); !j.finished(); ++j)
+	{
+	  net2[nodeIDmap[i]][nodeIDmap[*j]] = net(i)[*j];
+	}
+    }
+ 
+  return netPointer.release(); // release the pointer so that it is not destroyed
+}
 
 #endif //~ NETEXTRAS_H 

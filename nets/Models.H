@@ -14,7 +14,7 @@
 #include "models/CommunityNet.H"  // old version currently in lcelib/nets/OldModels.H
 #include "models/BBV.H" 
 // #include "models/BA.H" // perhaps Jussi will write this one
-
+#include "models/Davidsen.H" 
 
 #endif //~ MODELS_H
 

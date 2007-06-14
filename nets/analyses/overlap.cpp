@@ -73,7 +73,6 @@ int main(int argc, char* argv[]) {
   std::auto_ptr<NetType> netPointer(readNet<EdgeData>());
   NetType& net = *netPointer;  // Create a reference for easier handling of net.
   
-
-  outputOverlap(net,integerOutput);
+  outputOverlap(net,integerOutput,true);
 
 }
