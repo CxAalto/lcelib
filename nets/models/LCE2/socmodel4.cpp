@@ -45,7 +45,7 @@ Author: Jussi Kumpula
 #include "../../../../lcelib/Containers.H"
 #include "../../../../lcelib/Nets.H" 
 #include "../../../../lcelib/Randgens.H"
-#include "../../../../lcelib/misc/KruskalTree2.H"
+//#include "../../../../lcelib/misc/KruskalTree2.H"
 // #include <math.h>
 
 //#include "../deviations/apuja.H"
@@ -278,8 +278,7 @@ void socModel7(NetType & net, Generator & generator,
 
 
 
-
-
+/*
 template<typename NetType>
 NetType * findLargestComponent(NetType & net)
 {
@@ -338,7 +337,7 @@ NetType * findLargestComponent(NetType & net)
   return netPointer.release(); // release the pointer so that it is not destroyed
 
 }
-
+*/
 
 
 
