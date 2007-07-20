@@ -100,6 +100,9 @@ NetType * readNet3(const size_t weights, const size_t himmeli, char * fileName)
     return netPointer.release(); // release the pointer so that it is not destroyed
     // (we want to return it)
   }
+
+  std::cerr << "Unable to open file " << fileName << "\n";
+  return NULL; // Unable to open file.
 }
 // <---------------- readNet3 --------------------------
 
@@ -108,7 +111,11 @@ NetType * readNet3(const size_t weights, const size_t himmeli, char * fileName)
  
 int main(int argc, char* argv[]) {
   
-  if ( argc  < 2 ) {std::cerr << "Please give arguments: \n\tedge file to read in,\n\t1 if input file contains a header and 0 otherwise\n\n";}
+  if ( argc < 3 )
+    {
+      std::cerr << "Please give arguments: \n\tedge file to read in,\n\t1 if input file contains a header and 0 otherwise\n\n";
+      exit(0);
+    }
 
   const size_t himmeli_in = atoi(argv[2]); // use 0 if input file does not contain himmeli-headers, otherwise use 1
 
@@ -142,7 +149,7 @@ int main(int argc, char* argv[]) {
     std::cout << "\nPlease give starting node or type -1 to pick a random node:\n";
     std::cin >> givenNode; 
     size_t selectedNode = 0;
-    if ( (givenNode > -1) && (givenNode <net.size()) ) {
+    if ( (givenNode > -1) && ((size_t)givenNode < net.size()) ) {
       selectedNode = (size_t) givenNode;  // use the given node 
       std::cerr << "\nStarting snowball sample from given node " << selectedNode << "\n";
     }
