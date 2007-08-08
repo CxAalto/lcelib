@@ -68,7 +68,7 @@
 template<typename NetType, typename Generator>
 void ErdosRenyi(NetType& net, size_t netSize, float k_ave, Generator & generator, typename NetType::EdgeData w0=1) {
   ClearNet(net,netSize); /* make sure there are no edges present to start with */
-  const size_t m=(size_t) ceil((float) netSize * k_ave); /* number of edges to be added */
+  const size_t m=(size_t) ceil((float) netSize * k_ave / 2.0 ); /* number of edges to be added */
   size_t i, j; 
   /* add m edges, avoiding loops and multiple edges */
   for (size_t k=0; k<m; ++k) {
@@ -108,9 +108,10 @@ void ErdosRenyi2(NetType& net, float p, Generator & generator, typename NetType:
   
   for(size_t i=0; i<N; ++i) {
     for(size_t j=i+1; j<N; ++j) { 
-      // float toss=generator.nextNormed(); // a random number uniformly from [0,1)
-      if( generator.nextNormed() < p) { // create the link with prob p
+      float toss=generator.nextNormed(); // a random number uniformly from [0,1)
+      if( toss  < p) { // create the link with prob p
 	net[i][j]=w0; /* add edge between nodes i and j */
+	// std::cerr << "generated link " << i << "-" << j << "\n";
       }
     }
   }
