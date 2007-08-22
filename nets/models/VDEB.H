@@ -1,6 +1,4 @@
 // lcelib/nets/models/VDEB.H
-// 
-// Functions related to the variant A. Vazquez (2003) proposed to the Davidsen Ebel Bornholdt (2002) model.
 
 
 
@@ -9,6 +7,27 @@
  ---------------
 
  VDEB(net,u,generator) 
+
+A growing variant of the Davidsen, Ebel, Bornholdt 2002 model for social networks
+(Davidsen, J., Ebel, H., and Bornholdt, S., 2002.
+Emergence of a Small World from Local Interactions: Modeling
+Acquaintance Networks. Phys. Rev. Lett. 88 (12) 128701-1.)
+
+proposed by A. Vazquez, 2003 
+(Growing networks with local rules: Preferential attachment, clustering
+hierarchy, and degree correlations. Phys. Rev. E 67, 056104)
+
+In this variant, at each time step 
+  1) with prob. u a link is formed between two non-neighboring nodes 
+     which share at least one common neighbor (in Vazquez's words,  
+     a "potential edge" is converted into an edge)
+  2) with prob. 1-u, a new node is added to the network, joining it to a random node.
+
+  I keep track of potential edges by storing them in a set (Jorkki's hash set).
+  Whenever a new edge is added to the network, I add any new potential edges to this set.
+  When a potential edge is converted to an edge, I remove it from the list. 
+
+
 
 */
 
