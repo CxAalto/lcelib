@@ -1045,7 +1045,7 @@ float pearsonCoeff2(NetType & net) {
 
   const size_t netSize = net.size();
   float r = 0;
-  double term1, term2, term3;
+  double term1=0, term2=0, term3=0;
   size_t curr_deg, neigh_deg, linkNum = 0;
 
   // Go through each node in the network:
