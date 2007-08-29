@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
     struct CommNetArgs args;
     readCommNetArgs(args, argc, argv);
     outputCommNetArgs(args);  // Prints parameters to std::cerr verbosely
-    outputCommNetArguments2(argc, argv); // Prints command line to std::cout
+    //outputCommNetArguments2(argc, argv); // Prints command line to std::cout
 
     RandNumGen<> generator(args.randseed); 
     NetType net(args.netSize); 
