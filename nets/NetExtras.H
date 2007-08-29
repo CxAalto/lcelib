@@ -849,6 +849,8 @@ bool ConnectivityCheck(NetType & theNet) {
     return false;
   else
     assert(false);
+
+  return (false); //This should never happen, but not returning a value is illegal.
 }
 //  <---- ConnectivityCheck                                                  
 
@@ -980,6 +982,8 @@ of neighbouring nodes.
 
 */
 
+
+
 template <typename NetType>
 float pearsonCoeff(NetType & net) {
 
@@ -1023,9 +1027,67 @@ float pearsonCoeff(NetType & net) {
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
 
 
+/* pearsonCoeff2  (original by Jussi, modified by Lauri) */
 
+/* function pearsonCoeff2
 
+Calculates the Pearson correlation coefficient of the degrees of
+neighbouring nodes. Because the original pearsonCoeff runs into
+overflow problems with large networks, this function uses double
+precision numbers to expand the range. The result is that the
+calculation is no more perfectly accurate, but no overflow _should_
+occur for any reasonably sized network.
 
+*/
+
+template <typename NetType>
+float pearsonCoeff2(NetType & net) {
+
+  const size_t netSize = net.size();
+  float r = 0;
+  double term1, term2, term3;
+  size_t curr_deg, neigh_deg, linkNum = 0;
+
+  // Go through each node in the network:
+  for (size_t i=0; i<netSize; ++i) {
+
+    curr_deg=net(i).size(); // Read the degree of node i
+
+    // Go through the neighbors of node i:
+    for (typename NetType::const_edge_iterator j=net(i).begin(); !j.finished(); ++j) {
+      if ( *j > i ) {
+        ++linkNum;
+        neigh_deg = net(*j).size();
+        term1 += curr_deg * neigh_deg;
+        term2 += curr_deg + neigh_deg;
+        term3 += curr_deg*curr_deg + neigh_deg*neigh_deg;
+      }
+    }
+  }
+
+  // DEBUG
+  //std::cerr << "term1 = " << term1 << "\nterm2 = " << term2 << "\nterm3 = " << term3 << "\n";
+
+  double t1, t2, t3;
+  t1 = term1/linkNum;
+  t2 = 0.5*(term2/linkNum);
+  t2 = t2*t2;
+  t3 = 0.5*(term3/linkNum);
+
+  //std::cerr << "t1 = " << t1 << ", t2 = " << t2 << ", t3 = " << t3 << "\n";
+
+  if (t3-t2 != 0)
+    r = (t1-t2)/(t3-t2);
+  else
+    r = 0;
+
+  //std::cerr << "r =  " << r << "\n";
+
+  return r;
+}
+
+// <--- pearsonCoeff2
+//  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
 
 
 /*
