@@ -166,7 +166,7 @@ public:
     if (myHeap.finished()) {
       done=true;
     } else {
-      WeightType oldWeight=currRoute.weight;     
+      WeightType oldWeight=currRoute.weight;     //Unused variable
       currRoute.weight=*myHeap;
       currRoute.ends=myHeap.value();
       ++myHeap;
