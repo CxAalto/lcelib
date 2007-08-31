@@ -4,11 +4,11 @@
 
 
                                             
-To compile:     g++ -O -Wall Davidsen_step.cpp -o Davidsen_step
+To compile:     g++ -O -Wall DavidsenStep.cpp -o DavidsenStep
 
-To run:         ./Davidsen_step [params] > net.edg 2> net.log
+To run:         ./DavidsenStep [params] > net.edg 2> net.log
 
-Example:        ./Davidsen_step 7000 0.04 38926 > net.edg 2> net.log
+Example:        ./DavidsenStep 7000 0.04 38926 > net.edg 2> net.log
 
 [params] = N p randseed
 
@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
 
   /* Generate the network and do something with it */
 
-  Davidsen_step(net, args, generator);
+  DavidsenStep(net, args, generator);
 
   // Analyse only the largest component.
   std::auto_ptr<NetType> netPointer2(findLargestComponent<NetType>(net)); 
