@@ -11,22 +11,17 @@ maxRounds      - how many simulation rounds, use 25000 if don't know otherwise
 p_tri          - triangle probability, this is used to tune the average degree after delta has been fixed
 delta          - increment from initial weight 1; usually values between 0 and 1 
 netRoundsLimit - how many networks to generate
-namebase       - folder path and the base of the network name to be written out
-counterOffset  - normally the program generates network names from zero, but this value can be used to change it
 
-
-The code generates the network and outputs the full network and the largest component in the files
-   namebase_full.edg     namebase_largest.edg  
 
 Note: node indices in the file  namebase_largest.edg may run from 0 to N-1 
 (or counterOffset to N+counterOffset-1)  even if the network contains fewer than N nodes. 
 
 
 To compile: 
-  g++ -O socmodel4.cpp -o lce2
+  g++ -O socmodel4_opt.cpp -o lce2_opt
 
 To run: 
-  ./lce2 netsize maxRounds p_tri delta netRoundsLimit namebase offset
+  ./lce2_opt netsize maxRounds p_tri delta netRoundsLimit offset
 
 Example: 
  mkdir testnets;  ./lce2  100 1000 0.3 0.5 3 testnets/net  0
@@ -41,6 +36,7 @@ Author: Jussi Kumpula
 
 #include <vector>
 #include "../../../../lcelib/nets/NetExtras.H"
+#include "../../../../lcelib/nets/NetExtrasB.H"
 #include "../../../../lcelib/nets/models/SeedNet.H"
 #include "../../../../lcelib/Containers.H"
 #include "../../../../lcelib/Nets.H" 
@@ -175,16 +171,16 @@ size_t weighedStep(NetType & net, const size_t currentNode, Generator & generato
 void   printParameters(size_t netSize, size_t maxRounds, float p_jump, float p_walk, float p_tri, float p_death, 
 		       float delta,size_t  stepLimit, size_t netRoundsLimit, int randSeed) {
 
-  std::cout << "netSize=" <<  netSize << ";\n";
-  std::cout << "maxRounds=" <<  maxRounds << ";\n";
-  std::cout << "p_jump=" <<  p_jump << ";\n";
-  std::cout << "p_walk=" <<  p_walk << ";\n";
-  std::cout << "p_tri=" <<  p_tri << ";\n";
-  std::cout << "p_death=" <<  p_death << ";\n";
-  std::cout << "delta=" <<  delta << ";\n";
-  std::cout << "stepLimit=" <<  stepLimit << ";\n";
-  std::cout << "netRoundsLimit=" <<  netRoundsLimit << ";\n";
-  std::cout << "randSeed=" <<  randSeed << ";\n";
+  std::cerr << "netSize=" <<  netSize << ";\n";
+  std::cerr << "maxRounds=" <<  maxRounds << ";\n";
+  std::cerr << "p_jump=" <<  p_jump << ";\n";
+  std::cerr << "p_walk=" <<  p_walk << ";\n";
+  std::cerr << "p_tri=" <<  p_tri << ";\n";
+  std::cerr << "p_death=" <<  p_death << ";\n";
+  std::cerr << "delta=" <<  delta << ";\n";
+  std::cerr << "stepLimit=" <<  stepLimit << ";\n";
+  std::cerr << "netRoundsLimit=" <<  netRoundsLimit << ";\n";
+  std::cerr << "randSeed=" <<  randSeed << ";\n";
 
 }
 
@@ -211,73 +207,86 @@ void socModel7(NetType & net, Generator & generator,
     for ( size_t i = 0; i < netSize; ++i) {                    // loop over all nodes
       currentNode = i;
 
-      if ( generator.next(1.0) < p_jump || net(currentNode).size() == 0 ) {                     // choose random node
-		do {
-		  randNode = generator.next(netSize);
-		} while ( randNode == currentNode );    
-      if ( net(currentNode)[randNode] == 0 ) 
-		  net2[currentNode][randNode] = w0; // connect in net2 if not already connected
-      }
+      if ( generator.next(1.0) < p_jump || net(currentNode).size() == 0 )                      // choose random node
+	{		
+	  do
+	    {
+	      randNode = generator.next(netSize);
+	    } while ( randNode == currentNode );    
+	  if ( net(currentNode)[randNode] == 0 ) 
+	    net2[currentNode][randNode] = w0; // connect in net2 if not already connected
+	}
 	
       // perform walk from current node if possible
-      if ( net(currentNode).size() > 0 ) {    // this is not always true as the previous link is not yet efective     
-		if ( generator.next(1.0) < p_walk ) { // decide whether to do the walk or not
+      if ( net(currentNode).size() > 0 )     // this is not always true as the previous link is not yet efective     
+	{
+	  if ( generator.next(1.0) < p_walk )  // decide whether to do the walk or not
+	    {
+	      nextNode = weighedStep(net, currentNode, generator);
+	      if ( delta > 0 ) 
+		net2[currentNode][nextNode] = net2[currentNode][nextNode] + delta; // increase weight in net2
 	  
-		nextNode = weighedStep(net, currentNode, generator);
-        if ( delta > 0 )
-              net2[currentNode][nextNode] = net2[currentNode][nextNode] + delta; // increase weight in net2
-	  
-    	if ( net(nextNode).size() > 1 ) {                                // if possible, take step avoiding old node
-		    secondNode = weighedStepExcludingOld(net, nextNode, currentNode, generator);
-            if ( delta > 0 )
-                net2[nextNode][secondNode] = net2[nextNode][secondNode] + delta;   // increase weight in net2
-	    
-	    // second neighbor has been found
-	    if (secondNode != currentNode) {     // this should be always true... 
-	      if ( net(currentNode)[secondNode] == 0 ) {     // there is not link, i.e., we are at distance 2
-			if (  generator.next(1.0) < p_tri ) net2[currentNode][secondNode] = w0;
-	      }
-	      else {
-                if ( delta > 0 )
-                        net2[currentNode][secondNode] = net2[currentNode][secondNode] + delta;
-		      }
+	      if ( net(nextNode).size() > 1 )                                 // if possible, take step avoiding old node
+		{
+		  secondNode = weighedStepExcludingOld(net, nextNode, currentNode, generator);
+		  if ( delta > 0 )
+		    net2[nextNode][secondNode] = net2[nextNode][secondNode] + delta;   // increase weight in net2
+		  
+		  // second neighbor has been found
+		  if (secondNode != currentNode)      // this should be always true... 
+		    {
+		      if ( net(currentNode)[secondNode] == 0 )      // there is not link, i.e., we are at distance 2
+			{			
+			  if (  generator.next(1.0) < p_tri ) net2[currentNode][secondNode] = w0;
+			}
+		      else
+			{
+			  if ( delta > 0 )
+			    net2[currentNode][secondNode] = net2[currentNode][secondNode] + delta;
+			}
 		    }
-		  }
 		}
-      }
+	    }
+	}
     }
     // end of node loop
       
     // copy changes from net2 to net
-    for ( size_t i = 0; i < netSize; ++i) {
-       for (typename NetType::edge_iterator neigh=net2[i].begin(); !neigh.finished(); ++neigh) {
-          if ( *neigh > i ) { // take each link only once
-                net[i][*neigh] = net[i][*neigh] + neigh.value(); // add changes
-                neigh.value() = 0; // remove edge so that net2 will eventually be empty
-          }
-       }
-    }
+    for ( size_t i = 0; i < netSize; ++i)
+      {
+	for (typename NetType::edge_iterator neigh=net2[i].begin(); !neigh.finished(); ++neigh)
+	  {
+	    if ( *neigh > i )  // take each link only once
+	      {
+		net[i][*neigh] = net[i][*neigh] + neigh.value(); // add changes
+		neigh.value() = 0; // remove edge so that net2 will eventually be empty
+	      }
+	  }
+      }
       
     // remove nodes  
-    for ( size_t i = 0; i < netSize; ++i) { 
-      if ( generator.next(1.0) < p_death ) { // delete this node
-		  for (typename NetType::edge_iterator neigh=net[i].begin(); !neigh.finished(); ++neigh) {
-		    neigh.value() = 0;
-		  }
+    for ( size_t i = 0; i < netSize; ++i)
+      { 
+	if ( generator.next(1.0) < p_death )  // delete this node
+	  {
+	    for (typename NetType::edge_iterator neigh=net[i].begin(); !neigh.finished(); ++neigh) neigh.value() = 0;
+	  }
       }
-    }
    
-    if ( rounds%1000 == 0 ) {
-      std::cerr << rounds << "\t" <<  calculateAveDegree(net) << "\n";
-    }
+    if ( rounds%1000 == 0 ) 
+      {
+	std::cerr << rounds << "\t" <<  calculateAveDegree(net) << "\n";
+      }
     
   } // end of rounds loop 
 }
 
 
 
-/*
 
+
+
+/*
 template<typename NetType>
 NetType * findLargestComponent(NetType & net)
 {
@@ -352,26 +361,27 @@ int main(int argc, char* argv[]) {
   std::string argInfo =  "netSize        - network size (num nodes)\n maxRounds      - how many simulation rounds, use 25000 if don't know otherwise \n p_tri          - triangle probability, this is used to tune the average degree after delta has been fixed \n delta          - increment from initial weight 1; usually values between 0 and 1  \n netRoundsLimit - how many networks to generate \n namebase       - folder path and the base of the network name to be written out \n counterOffset  - normally the program generates network names from zero, but this value can be used to change it \n\nThe code outputs the full network and the largest component in the files \n     namebase_full.edg     namebase_largest.edg  \n\nNote: node indices in the file  namebase_largest.edg may run from 0 to N-1 \n(or counterOffset to N+counterOffset-1) even if the network contains fewer than N nodes.\n\n";
 
 
-  if ( (size_t) argc < (1+1)) { std::cerr << "\nPlease give arguments: \n " << argInfo << "\\n"; exit(1);}
+  if ( (size_t) argc < (1+5)) { std::cerr << "\nPlease give arguments: \n " << argInfo << "\\n"; exit(1);}
   const size_t netSize = atoi(argv[1]); // network size (num nodes)
   const size_t maxRounds = atoi(argv[2]); // how many simulation rounds, use 25000 if don't know otherwise
-  const float p_jump = atof(argv[8]); //0.0005; // amount of random links, 0.0005 is usual but also 0.00025 is fine
+  const float p_jump = atof(argv[6]); //0.0005;  // amount of random links, 0.0005 is usual but also 0.00025 is fine
   const float p_walk = 1;   // do not change this!
   const float p_tri = atof(argv[3]);  // triangle probability, this is used to tune the average degree after delta has been fixed
   const float p_death = 0.001; // do not change this!
   const float delta = atof(argv[4]);   // values between 0 and 1 usual
   const size_t netRoundsLimit = atoi(argv[5]);  // how many networks to generate
   size_t counterOffset = 0;    
-  if ( argc > 7 ) counterOffset = atoi(argv[7]);    // normally the program generates network names from zero, but this value can be used to change it
 
-  int randseed=time(0) + (int)counterOffset; // some random number 
+  int randseed = time(0); // some random number
+  if ((size_t)argc == 8) randseed = atoi(argv[7]);
+
   printParameters(netSize, maxRounds, p_jump, p_walk, p_tri, p_death, delta, 0, netRoundsLimit, randseed);
 
   RandNumGen<> generator(randseed);
 
 
-
-
+  size_t nodes_tot = 0;
+  double avg_clust_tot = 0, k_mean_tot = 0, pCoeff_tot = 0;
 
 
   // loop over several realisations of the network
@@ -393,36 +403,20 @@ int main(int argc, char* argv[]) {
     std::auto_ptr<NetType> netPointer(findLargestComponent<NetType>(net)); 
     NetType& net2 = *netPointer;  // Create a reference for easier handling of net.
 
+    double avg_clust = 0;
+    for (size_t i = 0; i < net2.size(); i++)
+      avg_clust += clusteringCoefficient(net2, i);
 
-    char buffer[100];
-    sprintf(buffer,"%s%d_full.edg",argv[6], netRounds+counterOffset);
-    
-    //      std::ofstream myFile(argv[8] + str);
-    std::ofstream myFile(buffer);
-    
-    if (! myFile) {
-      std::cerr << "Error opening output file\n";
-      exit(-1);
-    }
-    myFile << "HEAD\tTAIL\tWEIGHT\n";
-    outputEdgesAndWeights2(net, 0, myFile);  // whole network
-    myFile.close();
+    size_t edges = numberOfEdges(net2);
+    nodes_tot += net2.size();
+    k_mean_tot += (double)2*edges/net2.size();
+    avg_clust_tot += avg_clust/net2.size();
 
-
-    sprintf(buffer,"%s%d_largest.edg",argv[6], netRounds+counterOffset);
-    std::ofstream myFile2(buffer);
-    if (! myFile2) {
-      std::cerr << "Error opening output file\n";
-      exit(-1);
-    }
-    myFile2 << "HEAD\tTAIL\tWEIGHT\n";
-    outputEdgesAndWeights2(net2, 0, myFile2);  // largest component
-    myFile2.close();
-
+    pCoeff_tot += pearsonCoeff2(net2);
 
   }  // time to build a new network
 
-
+  std::cout << (double)nodes_tot/netRoundsLimit << " " << k_mean_tot/netRoundsLimit << " " << avg_clust_tot/netRoundsLimit << " " << pCoeff_tot/netRoundsLimit << "\n";
 
 }
 
