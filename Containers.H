@@ -566,7 +566,7 @@ class AutoMap: public Map<KeyType, ValueType, Index, Table,
   
 public:
   
-  typedef typename super::const_iterator const_iterator;
+  //typedef typename super::const_iterator const_iterator;
 
   AutoMap(): super() {};
   AutoMap(size_t capacity): super(capacity) {};
@@ -599,7 +599,7 @@ public:
      * the superclass first.
      */
     void _lce_finalize() {
-      if ((*this)==ValueType()) {
+      if (SuperStub::ref()==ValueType()) { // ORIGINALLY: if ((*this)==ValueType()) {
 	SuperStub::_lce_finalize();
 	((MyType &) SuperStub::target).removeFrom(SuperStub::loc);
       } else {
@@ -667,7 +667,7 @@ public:
     typedef typename super::iterator SuperIter;
     friend class AutoMap<KeyType, ValueType, Index, Table, Policy, Params>;
   public:
-    typedef typename SuperIter::reference reference;
+    //typedef typename SuperIter::reference reference;
   private:
     //iterator() {};
   protected:
