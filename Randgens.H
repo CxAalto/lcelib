@@ -139,6 +139,6 @@ public:
   }
 };
 
-RandNumGen<> globalRandSource;
+extern RandNumGen<> globalRandSource;
 
 #endif
