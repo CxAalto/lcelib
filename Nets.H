@@ -4,7 +4,6 @@
 #include<cstdlib>
 #include<vector>
 #include"Containers.H"
-//#include"containers/WeightPair.H"
 
 /** 
  * Some policies. We want to use magic values for the status. 
