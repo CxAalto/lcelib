@@ -47,7 +47,7 @@
  */
 
 template<typename NetType>
-NetType * readDirNet(const size_t weightColumn = 0, const int header = 0){
+NetType * readDirNet(const size_t weightColumn = 0, const int headerLines = 0){
 
   typedef typename NetType::EdgeData EdgeDataType;
   
@@ -57,7 +57,7 @@ NetType * readDirNet(const size_t weightColumn = 0, const int header = 0){
   size_t nodeCount = 0;
 
   // Skip headers
-  for (int i = 0; i < header; ++i) {
+  for (int i = 0; i < headerLines; ++i) {
     std::string line;
     std::getline(std::cin, line);  // Read a line from input and discard it...
   }
@@ -67,15 +67,20 @@ NetType * readDirNet(const size_t weightColumn = 0, const int header = 0){
     size_t source, dest;
     EdgeDataType data;
     std::string line;
+    std::string skip_temp;
+
     std::getline(std::cin, line);   // Read a line from input into a string.
     if (!line.empty()) {
       std::istringstream is(line);  // Extract data using a stringstream.
+      //std::cerr << "Line: " << line << "\n"; 
       is >> source;
       is >> dest;
       if (weightColumn > 1) {
-	for (int col = 1; col < weightColumn; ++col) {
-	  is >> data;      // if weights are given use them
+	for (int col = 2; col < weightColumn; ++col) {
+	  is >> skip_temp;      // if weights are given use them
+	  //std::cerr << "Skipped: " << skip_temp << "\n";
 	}
+	is >> data;
       }
       else data=1;                  // else set all weights to 1
       if (!is) {
@@ -194,11 +199,11 @@ double node_reciprocity(const NetType & net, const size_t i, const bool absolute
     w = net[i][*j].out() + net[i][*j].in();
     r += w*(absolute ? fabs(edge_reciprocity(net, i, *j)) : edge_reciprocity(net, i, *j));
     w_total += w;
-    }                                                   
+    }             
 
-  return r/w_total;
+  return (w_total > 0 ? r/w_total : 0);
 }                                                                               
-// <----- edge_reciprocity -------------------------------------------
+// <----- node_reciprocity -------------------------------------------
 
 
 /**  out_degree ----------------------------------------------------->
