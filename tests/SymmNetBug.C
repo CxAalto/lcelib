@@ -16,7 +16,7 @@ int main() {
 
   // Create a new net of fixed size.
   int netSize = 2;
-  auto_ptr<NetType> netPointer(new NetType(netSize));
+  std::auto_ptr<NetType> netPointer(new NetType(netSize));
   NetType& net = *netPointer;
 
   // This will trigger the bug.
