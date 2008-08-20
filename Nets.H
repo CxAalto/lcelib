@@ -90,6 +90,18 @@ protected:
     return edgesLegal(source, dest);
   }
 
+private:
+
+  /** 
+   *  Increase size to max{2*old_size, i+1}.
+   */
+  size_t increase_size(const size_t i) {
+    const size_t newSize = (2*super::size() > i ? 2*super::size() : i+1);
+    super::resize(newSize);
+    std::cerr << "Resized to " << newSize << "\n";
+    return newSize;
+  }
+
 public:
 
   const MyType & c() const {
@@ -203,6 +215,8 @@ public:
     }
   public:
     Edge operator[](size_t i) {
+      // Resize if necessary.
+      if (i >= getNet().size()) getNet().increase_size(i);
       //assert(getConstNet().localLegal(myIndex, i));
       /* This would be the place to prefetch. */
       //std::cerr << "Gettin' edge\n";
@@ -253,6 +267,8 @@ public:
   typedef typename EdgeMap::const_iterator const_edge_iterator;
 
   Node operator[](const size_t i) {
+    // Resize net if necessary, initializing with empty values.
+    if (i >= super::size()) increase_size(i);
     assert(this->keyLegal(i));
     return Node(*this, i);
   }
@@ -298,7 +314,7 @@ public:
   typedef WeightPair<EdgeData> MyType;
 
   /* // Implicit conversion of Edge or WeightPair to EdgeData is
-     // used instead of this.
+     // used instead of this. EdgeData must be streamable.
   friend std::ostream& operator << (std::ostream & os, const MyType & obj) {
     os << "(" << obj.out() << "," << obj.in() << ")";
     //os << obj.out();
@@ -510,6 +526,17 @@ protected:
     return edgesLegal(source, dest);
   }
 
+private:
+
+  /** 
+   *  Increase size to max{2*old_size, i+1}.
+   */
+  size_t increase_size(const size_t i) {
+    const size_t newSize = (2*super::size() > i ? 2*super::size() : i+1);
+    super::resize(newSize);
+    return newSize;
+  }
+
 public:
 
   const MyType & c() const {
@@ -638,6 +665,8 @@ public:
     }
   public:
     Edge operator[](size_t i) {
+      // Resize if necessary.
+      if (i >= getNet().size()) getNet().increase_size(i);
       //assert(getConstNet().localLegal(myIndex, i));
       /* This would be the place to prefetch. */
       //std::cerr << "Gettin' edge\n";
@@ -688,6 +717,8 @@ public:
   typedef typename EdgeMap::const_iterator const_edge_iterator;
 
   Node operator[](const size_t i) {
+    // Resize net if necessary, initializing with empty values.
+    if (i >= super::size()) increase_size(i);
     assert(this->keyLegal(i));
     return Node(*this, i);
   }
