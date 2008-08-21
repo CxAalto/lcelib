@@ -601,6 +601,7 @@ public:
     void _lce_finalize() {
       if (SuperStub::ref()==ValueType()) { // ORIGINALLY: if ((*this)==ValueType()) {
 	SuperStub::_lce_finalize();
+	//std::cerr << "Automap removing from loc " << SuperStub::loc << "\n";
 	((MyType &) SuperStub::target).removeFrom(SuperStub::loc);
       } else {
 	//std::cerr << "Finalizing AM:stub. TS:";
