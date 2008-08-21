@@ -15,9 +15,12 @@ typedef SymmNet<int> NetType;
 int main() {
 
   // Create a new net of fixed size.
-  int netSize = 2;
+  int netSize = 3;
   std::auto_ptr<NetType> netPointer(new NetType(netSize));
   NetType& net = *netPointer;
+
+  std::cerr << net[0][2] << "\n";
+  std::cerr << net[1][0] << "\n"; 
 
   // This will trigger the bug.
   std::cerr << net[0][1] << " " << net[1][0] << "\n"; 

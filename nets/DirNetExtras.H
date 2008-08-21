@@ -163,8 +163,8 @@ void outputEdgesAndWeights(NetType& theNet) {
 template<typename NetType>
 double edge_reciprocity(const NetType & net, const size_t i, const size_t j) {
   typedef typename NetType::EdgeData EdgeDataType;
-  EdgeDataType w_out = net[i][j].out();
-  EdgeDataType w_in = net[i][j].in();
+  double w_out = (double)net[i][j].out();
+  double w_in = (double)net[i][j].in();
   return 2*(w_out - w_in)/(w_out + w_in);
 }                                                                               
 // <----- edge_reciprocity -------------------------------------------
@@ -199,6 +199,7 @@ double node_reciprocity(const NetType & net, const size_t i, const bool absolute
     w = net[i][*j].out() + net[i][*j].in();
     r += w*(absolute ? fabs(edge_reciprocity(net, i, *j)) : edge_reciprocity(net, i, *j));
     w_total += w;
+    //std::cerr << *j << ": w = " << w << ", r = " << r << ", w_total = " << w_total << "\n";
     }             
 
   return (w_total > 0 ? r/w_total : 0);
