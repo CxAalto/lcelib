@@ -98,7 +98,7 @@ private:
   size_t increase_size(const size_t i) {
     const size_t newSize = (2*super::size() > i ? 2*super::size() : i+1);
     super::resize(newSize);
-    std::cerr << "Resized to " << newSize << "\n";
+    //std::cerr << "Resized to " << newSize << "\n";
     return newSize;
   }
 
