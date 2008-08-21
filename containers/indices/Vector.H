@@ -70,6 +70,17 @@ public:
   size_t size() const {
     return length;
   }
+
+  /**
+   * Resize and initialize with default value.
+   * Lauri Kovanen, 20.8.2008
+   */
+  void resize(const size_t newSize) {
+    super::resize(newSize, length); // Two parameter version
+				    // initializes to default.
+    length = newSize;
+  }	       
+
   bool empty() const {return length==0;}
   size_t getTableSize() const {
     return length;

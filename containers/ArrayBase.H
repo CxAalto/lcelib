@@ -59,11 +59,22 @@ public:
   }
       
   /**
-   * Two-parameter version _does not init_  Just for compatibility.
+   * Two-parameter version initializes to empty value.  
+   * (NB! Old version didn't init, and the excuse was `For
+   * compatibility'. If this breaks something, you know who to blame,
+   * but at the moment the resize functions are not used at all, so I
+   * doubt it.)
    */
 
   void resize(const size_t newSize, const size_t oldSize) {
     resize(newSize);
+    if (newSize>oldSize) {
+      DataType initVal;
+      for (size_t i=oldSize; i<newSize; ++i) {
+	memcpy(&data[i], &initVal, sizeof(DataType));
+      }
+    }
+
   }
 
   /**
