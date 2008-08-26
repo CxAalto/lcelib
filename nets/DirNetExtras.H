@@ -1,12 +1,15 @@
 #ifndef DIRNETEXTRAS_H
 #define DIRNETEXTRAS_H
+#define NDEBUG /* Comment this out to evaluate asserts. */
 #include <cassert>
 #include <vector>
 #include <sstream>
 #include <cmath>
 #include "../Nets.H"
 
-#define DEBUG
+#ifdef NDEBUG // Remove the NDEBUG flag, if set, so that asserts are
+#undef NDEBUG // on by default in all codes that include Nets.H.
+#endif
 
 /** 
  * Methods for manipulating and processing directed networks:
