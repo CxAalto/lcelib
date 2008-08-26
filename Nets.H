@@ -1,9 +1,14 @@
 #ifndef LCE_NETS_H
 #define LCE_NETS_H
+#define NDEBUG /* Comment this out to evaluate asserts. */
 #include<cassert>
 #include<cstdlib>
 #include<vector>
 #include"Containers.H"
+
+#ifdef NDEBUG // Remove the NDEBUG flag, if set, so that asserts are
+#undef NDEBUG // on by default in all codes that include Nets.H.
+#endif
 
 /** 
  * Some policies. We want to use magic values for the status. 
@@ -33,7 +38,12 @@ class SymmNet:public Map<size_t,
 			 AutoMap<size_t, _EdgeData, EdgeIndex, EdgeTable, 
 				 NetEdgePolicy<_EdgeData>, NetEdgeParams>, 
 			 NodeIndex, NodeTable> {
-  
+private:
+
+  // The network size as reported to the user. Corresponds to the
+  // largest explicitely set net size.
+  size_t virtual_size;
+
 public:
   typedef AutoMap<size_t, _EdgeData, EdgeIndex, EdgeTable, 
 		  NetEdgePolicy<_EdgeData>, NetEdgeParams> EdgeMap;
@@ -43,7 +53,7 @@ public:
   typedef NodeMap super;
   typedef _EdgeData EdgeData;
 
-  SymmNet(size_t capacity=0): super(capacity) {}
+  SymmNet(size_t capacity=0): super(capacity), virtual_size(capacity) {}
 protected:
   /** Private methods helping the iterators, stubs etc.  */
   void int_Set(const size_t source,const size_t dest, const EdgeData & value) {
@@ -90,15 +100,44 @@ protected:
     return edgesLegal(source, dest);
   }
 
+public:
+
+  /**
+   * Returns the virtual size of the network. To access the size of
+   * the underlying data structure, use super::size().
+   */
+  size_t size() const {
+    return virtual_size;
+  }
+
+  /**
+   * Explicit resize of the network. Also changes the virtual size to
+   * the new size, since this is what the user knows.
+   */
+  void resize(const size_t newSize) {
+    this->virtualSize = newSize;
+    super::resize(newSize);
+  }	       
+
 private:
 
+  /**
+   * Returns the true size of the underlying structure, not the
+   * virtual size shown to the user.
+   */
+  size_t structure_size() const {
+    return super::size();
+  }
+
   /** 
-   *  Increase size to max{2*old_size, i+1}.
+   * Increase size to max{2*old_size, i+1}. Called only when the new
+   * index does not fit in, and therefore we always have 
+   * i+1 > this->virtual_size.
    */
   size_t increase_size(const size_t i) {
     const size_t newSize = (2*super::size() > i ? 2*super::size() : i+1);
     super::resize(newSize);
-    //std::cerr << "Resized to " << newSize << "\n";
+    //std::cerr << "Resized to " << newSize << ", virtual size: " << this->virtual_size << "\n";
     return newSize;
   }
 
@@ -216,7 +255,10 @@ public:
   public:
     Edge operator[](size_t i) {
       // Resize if necessary.
-      if (i >= getNet().size()) getNet().increase_size(i);
+      if ( i >= getNet().size() ) {
+	if (i >= getNet().structure_size()) getNet().increase_size(i);
+	getNet().virtual_size = i+1;
+      }
       //assert(getConstNet().localLegal(myIndex, i));
       /* This would be the place to prefetch. */
       //std::cerr << "Gettin' edge\n";
@@ -268,7 +310,10 @@ public:
 
   Node operator[](const size_t i) {
     // Resize net if necessary, initializing with empty values.
-    if (i >= super::size()) increase_size(i);
+    if ( i >= size() ) {
+      if (i >= structure_size()) increase_size(i);
+      this->virtual_size = i+1;
+    }
     assert(this->keyLegal(i));
     return Node(*this, i);
   }
@@ -466,6 +511,11 @@ class DirNet:public Map<size_t,
 			 AutoMap<size_t, WeightPair<_EdgeData>, EdgeIndex, EdgeTable, 
 				 NetEdgePolicy<WeightPair<_EdgeData> >, NetEdgeParams>, 
 			 NodeIndex, NodeTable> {
+private:
+
+  // The network size as reported to the user. Corresponds to the
+  // largest explicitely set net size.
+  size_t virtual_size;
   
 public:
   typedef _EdgeData EdgeData;
@@ -477,7 +527,7 @@ public:
 		  EdgeIndex, NodeIndex> MyType;
   typedef NodeMap super;
 
-  DirNet(size_t capacity=0): super(capacity) {}
+  DirNet(size_t capacity=0): super(capacity), virtual_size(capacity) {}
 protected:
   /** Private methods helping the iterators, stubs etc.  */
   void int_Set(const size_t source,const size_t dest, const EdgePair & value) {
@@ -526,14 +576,44 @@ protected:
     return edgesLegal(source, dest);
   }
 
+public:
+
+  /**
+   * Returns the virtual size of the network. To access the size of
+   * the underlying data structure, use super::size().
+   */
+  size_t size() const {
+    return virtual_size;
+  }
+
+  /**
+   * Explicit resize of the network. Also changes the virtual size to
+   * the new size, since this is what the user knows.
+   */
+  void resize(const size_t newSize) {
+    this->virtualSize = newSize;
+    super::resize(newSize);
+  }	       
+
 private:
 
+  /**
+   * Returns the true size of the underlying structure, not the
+   * virtual size shown to the user.
+   */
+  size_t structure_size() const {
+    return super::size();
+  }
+
   /** 
-   *  Increase size to max{2*old_size, i+1}.
+   * Increase size to max{2*old_size, i+1}. Called only when the new
+   * index does not fit in, and therefore we always have 
+   * i+1 > this->virtual_size.
    */
   size_t increase_size(const size_t i) {
     const size_t newSize = (2*super::size() > i ? 2*super::size() : i+1);
     super::resize(newSize);
+    //std::cerr << "Resized to " << newSize << ", virtual size: " << this->virtual_size << "\n";
     return newSize;
   }
 
@@ -666,7 +746,10 @@ public:
   public:
     Edge operator[](size_t i) {
       // Resize if necessary.
-      if (i >= getNet().size()) getNet().increase_size(i);
+      if ( i >= getNet().size() ) {
+	if (i >= getNet().structure_size()) getNet().increase_size(i);
+	getNet().virtual_size = i+1;
+      }
       //assert(getConstNet().localLegal(myIndex, i));
       /* This would be the place to prefetch. */
       //std::cerr << "Gettin' edge\n";
@@ -718,7 +801,10 @@ public:
 
   Node operator[](const size_t i) {
     // Resize net if necessary, initializing with empty values.
-    if (i >= super::size()) increase_size(i);
+    if ( i >= size() ) {
+      if (i >= structure_size()) increase_size(i);
+      this->virtual_size = i+1;
+    }
     assert(this->keyLegal(i));
     return Node(*this, i);
   }
