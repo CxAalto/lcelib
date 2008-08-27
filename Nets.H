@@ -1,6 +1,6 @@
 #ifndef LCE_NETS_H
 #define LCE_NETS_H
-//#define NDEBUG /* Comment this out to evaluate asserts. */
+#define NDEBUG /* Comment this out to evaluate asserts. */
 #include<cassert>
 #include<cstdlib>
 #include<vector>
@@ -54,6 +54,10 @@ public:
   typedef _EdgeData EdgeData;
 
   SymmNet(size_t capacity=0): super(capacity), virtual_size(capacity) {}
+
+  static const EdgeMap emptyEdgeMap;
+  static const EdgeData emptyEdgeData;
+
 protected:
   /** Private methods helping the iterators, stubs etc.  */
   void int_Set(const size_t source,const size_t dest, const EdgeData & value) {
@@ -147,22 +151,15 @@ public:
     return *(const_cast<const MyType *>(this));
   }
 
-  const EdgeMap & operator()(const size_t i) {
-    // Resize net if necessary, initializing with empty values.
-    if ( i >= size() ) {
-      if (i >= structure_size()) increase_size(i);
-      this->virtual_size = i+1;
-    }
+  const EdgeMap & operator()(const size_t i) const {
+    // Returns an empty EdgeMap if i does not exist in the net.
+    if (i >= super::size()) return MyType::emptyEdgeMap;
     return super::operator[](i);
   }
 
-  const EdgeData & operator()(const size_t i, const size_t j) {
-    // Resize net if necessary, initializing with empty values.
-    const size_t larger = (i > j ? i : j);
-    if ( larger >= size() ) {
-      if (larger >= structure_size()) increase_size(i);
-      this->virtual_size = larger+1;
-    }
+  const EdgeData & operator()(const size_t i, const size_t j) const {
+    // Returns an empty EdgeData if i or j does not exist in the net.
+    if (i >= super::size() || j >= super::size()) return MyType::emptyEdgeData;
     return super::operator[](i)[j];
   }
 
@@ -294,6 +291,12 @@ public:
       }
       return *this;
     }
+
+    /*
+    operator EdgeMap() {
+      return SuperStub::target;
+    }
+    */
   };
   
   friend class Node;
@@ -351,6 +354,37 @@ public:
 
 };
 
+
+// Definitions for the static template variables. Yes, they really
+// need to be that complicated.
+template<typename _EdgeData,
+	 template<typename, typename, typename, typename, typename
+		  > class EdgeTable,
+	 template<typename, typename, typename, typename, typename
+		  > class NodeTable,
+	 template<typename, typename, typename, typename, 
+		  template<typename, typename, typename, typename, typename
+			   > class Table > class EdgeIndex,
+	 template<typename, typename, typename, typename, 
+		  template<typename, typename, typename, typename, typename
+			   > class Table> class NodeIndex> 
+const AutoMap<size_t, _EdgeData, EdgeIndex, EdgeTable, 
+	      NetEdgePolicy<_EdgeData>, NetEdgeParams>
+SymmNet<_EdgeData, EdgeTable, NodeTable, EdgeIndex, NodeIndex>::emptyEdgeMap;
+
+template<typename _EdgeData,
+	 template<typename, typename, typename, typename, typename
+		  > class EdgeTable,
+	 template<typename, typename, typename, typename, typename
+		  > class NodeTable,
+	 template<typename, typename, typename, typename, 
+		  template<typename, typename, typename, typename, typename
+			   > class Table > class EdgeIndex,
+	 template<typename, typename, typename, typename, 
+		  template<typename, typename, typename, typename, typename
+			   > class Table> class NodeIndex>
+const _EdgeData
+SymmNet<_EdgeData, EdgeTable, NodeTable, EdgeIndex, NodeIndex>::emptyEdgeData;
 
 
 /**
@@ -539,6 +573,10 @@ public:
   typedef NodeMap super;
 
   DirNet(size_t capacity=0): super(capacity), virtual_size(capacity) {}
+
+  static const EdgeMap emptyEdgeMap;
+  static const EdgePair emptyEdgePair;
+
 protected:
   /** Private methods helping the iterators, stubs etc.  */
   void int_Set(const size_t source,const size_t dest, const EdgePair & value) {
@@ -634,22 +672,15 @@ public:
     return *(const_cast<const MyType *>(this));
   }
 
-  const EdgeMap & operator()(const size_t i) {
-    // Resize net if necessary, initializing with empty values.
-    if ( i >= size() ) {
-      if (i >= structure_size()) increase_size(i);
-      this->virtual_size = i+1;
-    }
+  const EdgeMap & operator()(const size_t i) const {
+    // Returns an empty EdgeMap if i does not exist in the net.
+    if (i >= super::size()) return MyType::emptyEdgeMap;
     return super::operator[](i);
   }
 
-  const EdgePair & operator()(const size_t i, const size_t j) {
-    // Resize net if necessary, initializing with empty values.
-    const size_t larger = (i > j ? i : j);
-    if ( larger >= size() ) {
-      if (larger >= structure_size()) increase_size(i);
-      this->virtual_size = larger+1;
-    }
+  const EdgePair & operator()(const size_t i, const size_t j) const {
+    // Returns an empty EdgePair if i or j does not exist in the net.
+    if (i >= super::size() || j >= super::size()) return MyType::emptyEdgePair;
     return super::operator[](i)[j];
   }
 
@@ -855,5 +886,36 @@ public:
 
 };
 
+
+// Definitions for the static template variables. Yes, they really
+// need to be that complicated.
+template<typename _EdgeData,
+	 template<typename, typename, typename, typename, typename
+		  > class EdgeTable,
+	 template<typename, typename, typename, typename, typename
+		  > class NodeTable,
+	 template<typename, typename, typename, typename, 
+		  template<typename, typename, typename, typename, typename
+			   > class Table > class EdgeIndex,
+	 template<typename, typename, typename, typename, 
+		  template<typename, typename, typename, typename, typename
+			   > class Table> class NodeIndex> 
+const AutoMap<size_t, WeightPair<_EdgeData>, EdgeIndex, EdgeTable, 
+				 NetEdgePolicy<WeightPair<_EdgeData> >, NetEdgeParams>
+DirNet<_EdgeData, EdgeTable, NodeTable, EdgeIndex, NodeIndex>::emptyEdgeMap;
+
+template<typename _EdgeData,
+	 template<typename, typename, typename, typename, typename
+		  > class EdgeTable,
+	 template<typename, typename, typename, typename, typename
+		  > class NodeTable,
+	 template<typename, typename, typename, typename, 
+		  template<typename, typename, typename, typename, typename
+			   > class Table > class EdgeIndex,
+	 template<typename, typename, typename, typename, 
+		  template<typename, typename, typename, typename, typename
+			   > class Table> class NodeIndex>
+const WeightPair<_EdgeData>
+DirNet<_EdgeData, EdgeTable, NodeTable, EdgeIndex, NodeIndex>::emptyEdgePair;
 
 #endif
