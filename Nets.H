@@ -1,6 +1,6 @@
 #ifndef LCE_NETS_H
 #define LCE_NETS_H
-#define NDEBUG /* Comment this out to evaluate asserts. */
+//#define NDEBUG /* Comment this out to evaluate asserts. */
 #include<cassert>
 #include<cstdlib>
 #include<vector>
@@ -147,11 +147,22 @@ public:
     return *(const_cast<const MyType *>(this));
   }
 
-  const EdgeMap & operator()(const size_t i) const {
+  const EdgeMap & operator()(const size_t i) {
+    // Resize net if necessary, initializing with empty values.
+    if ( i >= size() ) {
+      if (i >= structure_size()) increase_size(i);
+      this->virtual_size = i+1;
+    }
     return super::operator[](i);
   }
 
-  const EdgeData & operator()(const size_t i, const size_t j) const {
+  const EdgeData & operator()(const size_t i, const size_t j) {
+    // Resize net if necessary, initializing with empty values.
+    const size_t larger = (i > j ? i : j);
+    if ( larger >= size() ) {
+      if (larger >= structure_size()) increase_size(i);
+      this->virtual_size = larger+1;
+    }
     return super::operator[](i)[j];
   }
 
@@ -623,11 +634,22 @@ public:
     return *(const_cast<const MyType *>(this));
   }
 
-  const EdgeMap & operator()(const size_t i) const {
+  const EdgeMap & operator()(const size_t i) {
+    // Resize net if necessary, initializing with empty values.
+    if ( i >= size() ) {
+      if (i >= structure_size()) increase_size(i);
+      this->virtual_size = i+1;
+    }
     return super::operator[](i);
   }
 
-  const EdgePair & operator()(const size_t i, const size_t j) const {
+  const EdgePair & operator()(const size_t i, const size_t j) {
+    // Resize net if necessary, initializing with empty values.
+    const size_t larger = (i > j ? i : j);
+    if ( larger >= size() ) {
+      if (larger >= structure_size()) increase_size(i);
+      this->virtual_size = larger+1;
+    }
     return super::operator[](i)[j];
   }
 
