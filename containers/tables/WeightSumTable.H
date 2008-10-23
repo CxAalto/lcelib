@@ -103,13 +103,22 @@ public:
       //std::cerr << "Finalize. Old sum:" << ((MyType &) target).weightSum;
       //std::cerr << ", old Weight:" << oldWeight;
       //std::cerr << ", new Weight:";
-      WeightType newWeight=((MyType &) super::target).weightAt(super::loc);
+
+      // OLD WeightType newWeight=((MyType &) super::target).weightAt(super::loc);
+      WeightType newWeight=((MyType &) super::value_stub::target).weightAt(super::value_stub::loc);
+
       //std::cerr << newWeight;
-      ((MyType &) super::target).weightSum+=(newWeight-oldWeight);
+
+      //OLD: ((MyType &) super::target).weightSum+=(newWeight-oldWeight);
+      ((MyType &) super::value_stub::target).weightSum+=(newWeight-oldWeight);
+
       //std::cerr << "new sum:" << ((MyType &) target).weightSum << "\n";
       oldWeight=newWeight;
       super::value_stub::_lce_finalize();
-      assert (((MyType &) super::target).isLegal());
+
+      //OLD: assert (((MyType &) super::target).isLegal());
+      assert (((MyType &) super::value_stub::target).isLegal());
+
       //std::cerr << "Foo";
     }
 
