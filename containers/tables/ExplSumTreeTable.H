@@ -28,8 +28,8 @@ class ExplSumTreeTable:public ValueTable<Pair<KeyType,
 					 ValueType, Policy, Params, Index> {
 private:
   typedef ExplSumTreeTable<KeyType, ValueType, Policy, Params, Index> MyType;
-  typedef typename Policy::WeightType WeightType;
   typedef ImplTreeHelper<Params::treeLogBase> help;
+  typedef typename Policy::WeightType WeightType;
   typedef ValueTable<Pair<KeyType, WeightType>, ValueType, 
 		     Policy, Params, Index> super;
 
@@ -43,7 +43,7 @@ private:
 
 public:
   typedef WeightWeightPolicy<MyType> DefaultWeightPolicy;
-  
+
 private:
 
   /** For legality only.  */
@@ -317,10 +317,12 @@ protected:
     return super::isLegal();
   }
 
+  /* Use resize in ArrayBase directly. (Lauri, 20081023)
   void resize(const size_t newSize, const size_t oldSize) {
     super::resize(newSize, oldSize, true);
     for (size_t i=oldSize; i<newSize; ++i) refToSum(i)=WeightType();
    }
+  */
 
 public:
   
