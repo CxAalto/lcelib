@@ -84,8 +84,12 @@ void readDavidsenArgs(struct DavidsenArgs & args, int argc, char** argv)
   args.netSize = atoi(argv[bookmark]);  bookmark++;
   args.p = atof(argv[bookmark]); bookmark++;
   args.randseed = atoi(argv[bookmark]);  bookmark++;
-
-  args.iter_max = static_cast<size_t>( (log(0.5) - log(args.netSize)) / log(1-args.p/args.netSize));
+  
+  /* The number of iterations is chosen be setting the expected number
+     of nodes that are never removed during the iteration (N_nr, by
+     default 0.5). */
+  float N_nr = 0.5;
+  args.iter_max = static_cast<size_t>( (log(N_nr) - log(args.netSize)) / log(1-args.p/args.netSize));
 }  
 // <--- readDavidsenArgs
 
