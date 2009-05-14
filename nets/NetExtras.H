@@ -228,7 +228,8 @@ NetType * readNet2(const size_t weights, const size_t himmeli){
       else data=1;                  // else set all weights to 1
       if (!is) {
 	std::cerr << "\nError in reading input.\n"
-		  << "Possibly a line containing too few values, or a header line.\n\n"; 
+		  << "Possibly a line containing too few values, or a header line.\n"
+		  << "source = " << source << ", dest = " << dest << " " <<  data << "\n\n";
 	exit(1); 
       }
 

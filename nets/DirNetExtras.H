@@ -33,7 +33,7 @@
  * 0 to N-1. Edges to self are automatically excluded.
  *
  * The column used as weight is specified in the first parameter, the
- * first column being column 0. If this parameter is missing or less
+ * first valid column beign 2. If this parameter is missing or less
  * than 2 (the first column after the edge source and destination), a
  * non-weighted network is assumed.
  *
@@ -41,16 +41,24 @@
  * number of header lines. If the second parameter is missing or zero,
  * the input is assumed to have no headers.
  *
+ * If a pointer to std::vector<size_t> object is provided as a third
+ * parameter, the vector will be expanded to N with each element
+ * corresponding to the degrees of unweighted, undirected network:
+ * each edge in the input file will be counted even if the weight is
+ * zero.
+ *
  * Call example with weight in the third column and no headers:
  *
  * std::auto_ptr<NetType> netPointer(readDirNet<NetType>(3));
  * NetType& net = *netPointer;  // Create a reference for easier handling of net.
  *
- * Lauri Kovanen, 13.8.2008 (from similar method for SymmNet)
+ * Lauri Kovanen, 13.8.2008 (based on a similar method for SymmNet)
  */
 
 template<typename NetType>
-NetType * readDirNet(const size_t weightColumn = 0, const int headerLines = 0){
+NetType * readDirNet(const size_t weightColumn = 0,
+		     const int headerLines = 0,
+		     std::vector<size_t>* degrees = 0){
 
   typedef typename NetType::EdgeData EdgeDataType;
   
@@ -79,7 +87,7 @@ NetType * readDirNet(const size_t weightColumn = 0, const int headerLines = 0){
       is >> source;
       is >> dest;
       if (weightColumn > 1) {
-	for (int col = 2; col < weightColumn; ++col) {
+	for (unsigned int col = 2; col < weightColumn; ++col) {
 	  is >> skip_temp;      // if weights are given use them
 	  //std::cerr << "Skipped: " << skip_temp << "\n";
 	}
@@ -109,18 +117,36 @@ NetType * readDirNet(const size_t weightColumn = 0, const int headerLines = 0){
   std::auto_ptr<NetType> netPointer(new NetType(nodeCount));
   NetType& net = *netPointer;  // Create a reference for easier access.
   
+  // Resize vector for unweighted node degrees.
+  if (degrees) {
+    degrees->clear();
+    degrees->resize(nodeCount, 0);
+  }
   // Add edges to the net.
   for (size_t i = 0; i < edgeSource.size(); ++i) {
     size_t source = edgeSource.at(i);
     size_t dest = edgeDest.at(i);
     EdgeDataType data = edgeData.at(i);
-    
+
     if (source != dest) {
       net[source][dest] = data;
       //std::cerr << "Writing to net: " << source << "->" << dest << " : " << data << "\n";
+
+      if (degrees) degrees->at(source) += 1;
+    }
+
+  }
+
+  // Make sure the degrees are up to date also for unidirectional
+  // edges.
+  if (degrees) {
+    for (size_t i = 0; i < net.size(); ++i) {
+      if (degrees->at(i) < net(i).size()) {
+	degrees->at(i) = net(i).size();
+      }
     }
   }
-  
+
   return netPointer.release(); // release the pointer so that it is not destroyed
 			       // (we want to return it)
 }

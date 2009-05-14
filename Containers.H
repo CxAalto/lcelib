@@ -48,11 +48,10 @@ struct SetContainerPolicy: public WeightPolicy<KeyType>,
 			   public UsagePolicy<KeyType> {};
 
 template<typename KeyType, typename ValueType>
-struct MapContainerPolicy:
-  public WeightPolicy<ValueType>, 
-  public KeyPolicy<KeyType>, 
-  //public PrefetchPolicy<ValueType>, 
-  public UsagePolicy<KeyType> {};
+struct MapContainerPolicy: public WeightPolicy<ValueType>, 
+			   public KeyPolicy<KeyType>, 
+                           //public PrefetchPolicy<ValueType>, 
+			   public UsagePolicy<KeyType> {};
 
   
 /**
@@ -259,7 +258,7 @@ protected:
    */
 
   size_t findAndInit(const KeyType & key) {
-    size_t loc;
+    size_t loc = 0;
     //std::cerr <<"\nFIND_AND_INIT, key:" << key;
     if (!forcedFind(key, loc)) {
       //std::cerr << ", was new\n";
@@ -312,7 +311,7 @@ public:
   }
      
   void setValue(const KeyType & key, const ValueType & value) {
-    size_t loc;
+    size_t loc = 0;
     forcedFind(key, loc);
     super::setValue(loc, value);
   }
@@ -758,6 +757,12 @@ struct WeightPolicy<AutoMap<KeyType, ValueType, Index, Table, Policy, Params
 			    > >: public AutoMap<KeyType, ValueType, Index, 
 						Table, Policy, Params
 						>::DefaultWeightPolicy {};
+
+/** NB! When using ExplSumTreeTable, the AutoMap::DefaultWeightPolicy
+ * is WeightWeightPolicy<ExplSumTreeTable<...> >, which is defined in
+ * ExplSumTreeTable. WeightWeightPolicy is again defined in
+ * ContainerPolicies.H.
+ */
 
 
 /** 
