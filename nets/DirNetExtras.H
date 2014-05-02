@@ -3,8 +3,11 @@
 #define NDEBUG /* Comment this out to evaluate asserts. */
 #include <cassert>
 #include <vector>
+#include <list>
+#include <utility>
 #include <sstream>
 #include <cmath>
+#include "../Randgens.H"
 #include "../Nets.H"
 
 #ifdef NDEBUG // Remove the NDEBUG flag, if set, so that asserts are
@@ -15,11 +18,15 @@
  * Methods for manipulating and processing directed networks:
  *
  * readDirNet
+ * mutualize
  * outputEdgesAndWeights
+ * output_undir_edges
  * edge_reciprocity
  * node_reciprocity
  * out_degree
  * in_degree
+ * continuous_in_degree
+ * continuous_out_degree
  * node_entropy
  */
 
@@ -36,6 +43,12 @@
  * first valid column beign 2. If this parameter is missing or less
  * than 2 (the first column after the edge source and destination), a
  * non-weighted network is assumed.
+ *
+ * If 'sum_data' is true and a edge occurs multiple times, the final
+ * weight will be the sum of all weights. In the unweighted case this
+ * corresponds to counting the number of occurances of a given
+ * weight. If 'sum_data' is false (default) and a edge occurs multiple
+ * times, the last occurance is used.
  *
  * If the file contains headers, use the second parameter to tell the
  * number of header lines. If the second parameter is missing or zero,
@@ -58,7 +71,8 @@
 template<typename NetType>
 NetType * readDirNet(const size_t weightColumn = 0,
 		     const int headerLines = 0,
-		     std::vector<size_t>* degrees = 0){
+		     std::vector<size_t>* degrees = 0,
+		     const bool sum_data = false){
 
   typedef typename NetType::EdgeData EdgeDataType;
   
@@ -129,7 +143,8 @@ NetType * readDirNet(const size_t weightColumn = 0,
     EdgeDataType data = edgeData.at(i);
 
     if (source != dest) {
-      net[source][dest] = data;
+      if (sum_data) net[source][dest] += data;
+      else net[source][dest] = data;
       //std::cerr << "Writing to net: " << source << "->" << dest << " : " << data << "\n";
 
       if (degrees) degrees->at(source) += 1;
@@ -152,14 +167,48 @@ NetType * readDirNet(const size_t weightColumn = 0,
 }
 // <----- readDirNet -------------------------------------------------
 
+
+/** <---- mutualize ----------------------------------------------------
+ *
+ * Remove all unidirectional edges. Returns the number of edges removed.
+ */
+template <typename NetType>
+size_t mutualize(NetType & net) {
+  typedef typename NetType::EdgeData EdgeDataType;
+
+  std::list<std::pair<size_t,size_t> > to_remove;
+
+  // Find all unidirectional edges.
+  for (size_t i = 0; i < net.size(); ++i) {
+    for (typename NetType::const_edge_iterator j = net(i).begin();
+	 !j.finished(); ++j) {
+      if (net[i][*j]->in() == 0 && net[i][*j]->out() > 0)
+	to_remove.push_back(std::make_pair(i,*j));
+      else if (net[i][*j]->in() > 0 && net[i][*j]->out() == 0)
+	to_remove.push_back(std::make_pair(*j,i));
+    }
+  }
+
+
+  // Remove the unidirectional edges.
+  std::list<std::pair<size_t,size_t> >::iterator it;
+  for (it = to_remove.begin(); it != to_remove.end(); ++it)
+    net[it->first][it->second] = EdgeDataType();
+
+  return to_remove.size();
+}
+// <----- mutualize ---------------------------------------------------------
+
+
 /**  outputEdgesAndWeights ------------------------------------------>
  *
- *  Prints to std::cout the edges and weights of the network in the format      
- *    SOURCE DEST WEIGHT                                                          
+ *  Print the edges and weights of the network in the format      
+ *    SOURCE DEST WEIGHT                          
 */                                                                              
 
 template<typename NetType>                                                      
-void outputEdgesAndWeights(NetType& theNet) {                                   
+void outputEdgesAndWeights(NetType& theNet,
+			   std::ostream& output = std::cout) {
   typedef typename NetType::EdgeData EdgeDataType;
 
   // Print out edges and weights of the network (source dest weight):           
@@ -168,12 +217,67 @@ void outputEdgesAndWeights(NetType& theNet) {
          !j.finished(); ++j) {
       // Print only edges with non-zero weights.
       if (j.value() != EdgeDataType()) {
-	    std::cout << i <<  "\t" << (*j) << "\t" << j.value() << "\n";       
+	    output << i <<  "\t" << (*j) << "\t" << j.value() << "\n";       
       }
     }                                                                           
   }                                                                             
 }                                                                               
 // <----- outputEdgesAndWeights --------------------------------------
+
+/**  outputEdgesAndWeightsMutual ------------------------------------>
+ *
+ *  Print the edges and weights of the network in the format      
+ *    SOURCE DEST WEIGHT
+ *  Only mutual edges are printed.
+*/                                                                              
+
+template<typename NetType>                                              
+void outputEdgesAndWeightsMutual(NetType& theNet,
+				 std::ostream& output = std::cout) {
+  typedef typename NetType::EdgeData EdgeDataType;
+
+  // Print out edges and weights of the network (source dest weight):           
+  for (size_t i = 0; i < theNet.size(); ++i) {                                      
+    for (typename NetType::const_edge_iterator j = theNet(i).begin();             
+         !j.finished(); ++j) {
+      // Print only edges with non-zero weight in both directions.
+      if (theNet[i][*j]->in() > 0 && theNet[i][*j]->out() > 0)
+	output << i <<  "\t" << (*j) << "\t" << j.value() << "\n";       
+    }                                                                           
+  }                                                                             
+}                                                                               
+// <----- outputEdgesAndWeightsMutual --------------------------------
+
+
+/**  output_undir_edges --------------------------------------------->
+ *
+ * Prints undirected edges and sum of in and outweights of the network
+ * in the format SOURCE DEST SUM_WEIGHT.
+ *
+ * Jon Eiesland, 30.05.2009
+*/                                                                              
+template<typename NetType>
+void output_undir_edges(NetType& theNet,
+			std::ostream& output = std::cout) {
+  typedef typename NetType::EdgeData EdgeDataType;
+  EdgeDataType w;
+  
+  // Print out undirected edges and weights of the network (source
+  // dest sum_of_in_and_out_weight):
+  for (size_t i = 0; i < theNet.size(); ++i) {
+    for (typename NetType::const_edge_iterator j = theNet(i).begin();
+         !j.finished(); ++j) {
+      if (*j > i){
+	w = theNet[i][*j]->out() + theNet[i][*j]->in();
+	output << i <<  "\t" << (*j) << "\t" << w << "\n";
+      }
+      
+    }
+    
+  }
+}
+
+// <----- output_undir_edges -----------------------------------------
 
 
 /**  edge_reciprocity ----------------------------------------------->
@@ -279,6 +383,86 @@ size_t in_degree(const NetType & net, const size_t i) {
 }                                                                               
 // <----- in_degree --------------------------------------------------
 
+/**  cont_out_degree ------------------------------------------>
+ *
+ * Calculates the continuous out-degree of given node. The continuous
+ * degree (c-degree) is defined in 
+ *    S. Abdallah (2009): 
+ *    `The Continuous Node Degree: a New Measure for Complex Networks'
+ * as 2^Hw, where Hw is the entropy of edge weight fractions w_ij/s_i
+ * (calculated with base 2 logarithm).
+ *
+ * Lauri Kovanen, 28.8.2009
+*/
+
+template<typename NetType>
+double cont_out_degree(const NetType & net, const size_t i) {
+  typedef typename NetType::EdgeData EdgeDataType;
+
+  // Get edge weights and find out node strength.
+  std::list<EdgeDataType> weights;
+  double s = 0.0;
+  for (typename NetType::const_edge_iterator j = net(i).begin();             
+       !j.finished(); ++j) {
+    EdgeDataType w = net[i][*j].out();
+    if (w > 0) {
+      s += (double)w;
+      weights.push_back(w);
+    }
+  }
+  if (s == 0.0) return 0.0;
+
+  // Calculate entropy (natural base).
+  double entropy = 0.0;
+  typename std::list<EdgeDataType>::iterator wi;
+  for (wi = weights.begin(); wi != weights.end(); wi++) {
+    if (*wi > 0) {
+      double p = ((double)*wi)/s;
+      entropy -= p*log(p);
+    }
+  }
+
+  return exp(entropy);
+}                                                                               
+// <----- cont_out_degree --------------------------------------
+
+
+/**  cont_in_degree ------------------------------------------>
+ *
+ * Calculates the continuous in-degree of given node.
+ * (See cont_out_degree for further explanation.)
+*/
+
+template<typename NetType>
+double cont_in_degree(const NetType & net, const size_t i) {
+  typedef typename NetType::EdgeData EdgeDataType;
+  // Get edge weights and find out node strength.
+  std::list<EdgeDataType> weights;
+  double s = 0.0;
+  for (typename NetType::const_edge_iterator j = net(i).begin();             
+       !j.finished(); ++j) {
+    EdgeDataType w = net[i][*j].in();
+    if (w > 0) {
+      s += (double)w;
+      weights.push_back(w);
+    }
+  }
+  if (s == 0.0) return 0.0;
+
+  // Calculate entropy (natural base).
+  double entropy = 0.0;
+  typename std::list<EdgeDataType>::iterator wi;
+  for (wi = weights.begin(); wi != weights.end(); wi++) {
+    if (*wi > 0) {
+      double p = ((double)*wi)/s;
+      entropy -= p*log(p);
+    }
+  }
+
+  return exp(entropy);
+}                                                                               
+// <----- cont_in_degree --------------------------------------
+
 
 /**  node_entropy --------------------------------------------------->
  *
@@ -310,7 +494,7 @@ double node_entropy(const NetType & net, const size_t i) {
     weights.push_back(w);
     w_total += w;
     //std::cerr << i << "->" << *j << " : w_tot = " << w << "\n";
-    }                                                   
+  }                                                   
   
   double entropy = 0.0;
   double N = net(i).size();
@@ -327,5 +511,39 @@ double node_entropy(const NetType & net, const size_t i) {
 }                                                                               
 // <----- node_entropy -----------------------------------------------
 
+
+/** <---- overlap ----------------------------------------------------
+ *
+ * Calculate the overlap of a given edge. Note that this method is
+ * undirected, that is, the direction of edges has no relevance. If
+ * the degree of both edges is less than 2, returns -1.
+ */
+template <typename NetType>
+double overlap(NetType & net, size_t i, size_t j) {
+  assert( i < net.size() );
+  assert( j < net.size() );
+  size_t ki = net(i).size();
+  size_t kj = net(j).size();
+  if ( (ki < 2) && (kj < 2) ) { 
+    /*
+    std::cerr << "Overlap for edge " << i << "-" << j
+	      << " not defined, returning -1. Careful with averaging!\n";
+    */
+    return (double) -1;
+  }
+  else {
+    // count the common neighbors of i and j                                           
+    size_t nij=0;
+    for (typename NetType::const_edge_iterator k=net(j).begin();
+	 !k.finished();
+	 ++k) {
+      if (net(*k)[i] != 0) ++nij;
+    }
+    // calculate and return the overlap 
+    double overlap_ij = (double) nij / ( (double) (ki - 1 + kj - 1 - nij) );
+    return overlap_ij;
+  }
+}
+// <----- overlap ---------------------------------------------------------
 
 #endif
