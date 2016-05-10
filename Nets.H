@@ -5,6 +5,7 @@
 #include<cstdlib>
 #include<vector>
 #include"Containers.H"
+#include<climits>
 
 #ifdef NDEBUG // Remove the NDEBUG flag, if set, so that asserts are
 #undef NDEBUG // on by default in all codes that include Nets.H.
