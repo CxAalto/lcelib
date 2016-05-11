@@ -1,14 +1,10 @@
---  Muutama typo yms. korjattu 19.8.05  -Riitta
-
-
 Verkoista ja containereista, lyhyesti. 
 
-Kirjastot sijaitsevat hakemistossa /proj/finance/lcelib. 
 Alkuun pääsee seuraavilla includeilla:
 
-#include "/proj/finance/lcelib/Containers.H"
-#include "/proj/finance/lcelib/Nets.H"
-#include "/proj/finance/lcelib/Randgens.H"
+#include "lcelib/Containers.H"
+#include "lcelib/Nets.H"
+#include "lcelib/Randgens.H"
 
 Hyvin yksinkertainen verkkoimplementaatio, jolla kelpaa aloittaa,
 tuntee nimen SymmNet. Se on templaattiluokka, joka syö parametreinaan
@@ -69,7 +65,7 @@ net(i)[j]
 
 tai
 
-net(i,j)  //huomaa: tämä syntaksi ei toiminut vielä 19.8.05
+net(i,j) 
 
 Sekin palauttaa default-arvon, jos särmää ei löydy verkosta. 
 
@@ -157,10 +153,6 @@ ResultType rands.next(ResultType x);
 Palautusarvo on siis samaa tyyppiä kuin syöte. Tämä on yleensä aika
 näppärää. (1.0 on muuten flotari, 1 int). 
 
-Siinäpä kaikki. Tämäkin dokkari on muuten versionhallinnassa, ja
-päivittyy hiljakseen 
-kunnes varsinainen web-dokumentaatio on valmiina.
-
 Työn iloa!
 
 Esimerkkejä (testaamattomia):
@@ -179,7 +171,7 @@ for (NetType::const_edge_iterator j=net(i).begin();
      if (net(*k)[i] != 0) sum++;    
 }
 result=((float) sum)/net(i).size() / ( net(i).size()-1 ); 
-//korjaus: klusterointikertoimen jakaja korjattu 
+
 Huomaa: Kannattaa välttää toistuvia jakolaskuja, koska
 niistä saattaa syntyä pyöristysvirhettä. Lasketaan mieluummin 
 summan osamäärä kuin osamäärien summa. 
@@ -187,8 +179,7 @@ summan osamäärä kuin osamäärien summa.
 
 Jos kyseessä on painottamaton verkko, käy if-lauseen sijasta yksinkertaisesti 
 
-sum+=net(*k,i);  //tämä syntaksi ei toiminut vielä 19.8.05,
-		 net(*k)[i] toimii
+sum+=net(*k,i); 		
                        
 koska bool konvertoituu automaagisesti arvoihin 1 ja
 0. Harjoitustyöksi jätettäköön, miksi tulosta ei jaeta/kerrota
