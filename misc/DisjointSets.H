@@ -245,10 +245,6 @@ public:
     return size;
   }
   
-  IndexType getFather(IndexType i){
-    return fathers[i];
-  }
-  
   void getFathersList(deque<IndexType>& fathersvect){
     for(IndexType i=0; i<size; i++){
       if(find(fathersvect.begin(), fathersvect.end(), fathers[i]) != fathersvect.end()){
