@@ -1,6 +1,10 @@
 #include<cassert>
 #include <iostream>
 #include <map>
+#include <fstream>
+#include <string>
+#include <stdlib.h>
+#include <deque>
 
 /**
  * Data structures for disjoint sets forests. See the DisjointSets class for documentation.
@@ -104,6 +108,45 @@ public:
       std::cout << i->first << " " << i->second << std::endl;
     }    
   }
+  
+  void printFileLenDist(std::string file){//print in a file the length distribution
+    std::ofstream fileLenDist ((char*)file.c_str());
+    for (typename std::map<ValueType,IndexType>::const_iterator i = lenDistribution->begin();i!=lenDistribution->end();i++) {
+      fileLenDist << i->first << " " << i->second << std::endl;
+    }
+    fileLenDist.close();
+  }
+  
+  float getGiantLen(){//get the giant length from the length distribution
+    float giant=0;
+    for (typename std::map<ValueType,IndexType>::const_iterator i = lenDistribution->begin();i!=lenDistribution->end();i++) {
+      if(i->first > giant){
+        giant = i->first;
+      }
+    }
+    return giant;
+  }
+  
+  float getScdGiantLen(float giant){//get the giant size from the size distribution
+    float scdGiant=0;
+    for (typename std::map<ValueType,IndexType>::const_iterator i = lenDistribution->begin();i!=lenDistribution->end();i++) {
+      if(i->first < giant and i->first > scdGiant){
+        scdGiant = i->first;
+      }
+    }
+    return scdGiant; 
+  }
+  
+  float getSuscLen(int giant){//compute the susceptibility
+    float s_up=0;
+    float s_down=0;
+    for (typename std::map<ValueType,IndexType>::const_iterator i = lenDistribution->begin();i!=lenDistribution->end();i++) {
+      s_down += (i->first)*(i->second);
+      s_up += (i->first)*(i->first)*(i->second);
+    }
+    
+    return (s_up - (giant*giant))/(s_down - giant);
+  }
 
   void setValue(IndexType set, ValueType value){
     minValues[set]=value;
@@ -197,12 +240,71 @@ public:
     }    
     std::cout << std::endl;
   }
+  
+  IndexType getForestSize(){
+    return size;
+  }
+  
+  IndexType getFather(IndexType i){
+    return fathers[i];
+  }
+  
+  void getFathersList(deque<IndexType>& fathersvect){
+    for(IndexType i=0; i<size; i++){
+      if(find(fathersvect.begin(), fathersvect.end(), fathers[i]) != fathersvect.end()){
+        continue;
+      }
+      else{fathersvect.push_back(fathers[i]);}
+    }
+  }
 
+  
   void printSizeDist(){
     for (typename std::map<IndexType,IndexType>::const_iterator i = sizeDistribution->begin();i!=sizeDistribution->end();i++) {
       std::cout << i->first << " " << i->second << std::endl;
     }    
   }
+  
+  void printFileSizeDist(std::string file){//print in a file the size distribution
+    std::ofstream fileSizeDist ((char*)file.c_str());
+    for (typename std::map<IndexType,IndexType>::const_iterator i = sizeDistribution->begin();i!=sizeDistribution->end();i++) {
+      fileSizeDist << i->first << " " << i->second << std::endl;
+    }
+    fileSizeDist.close();  
+  }
+  
+  int getGiantSize(){//get the giant size from the size distribution
+    int giant=0;
+    for (typename std::map<IndexType,IndexType>::const_iterator i = sizeDistribution->begin();i!=sizeDistribution->end();i++) {
+      if(i->first > giant){
+        giant = i->first;
+      }
+    }
+    return giant; 
+  }
+  
+  int getScdGiantSize(int giant){//get the giant size from the size distribution
+    int scdGiant=0;
+    for (typename std::map<IndexType,IndexType>::const_iterator i = sizeDistribution->begin();i!=sizeDistribution->end();i++) {
+      if(i->first < giant and i->first > scdGiant){
+        scdGiant = i->first;
+      }
+    }
+    return scdGiant; 
+  }
+  
+  float getSuscSize(int giant){//compute the susceptibility
+    
+    float s_up=0;
+    float s_down=0;
+    for (typename std::map<IndexType,IndexType>::const_iterator i = sizeDistribution->begin();i!=sizeDistribution->end();i++) {
+      s_down += (i->first)*(i->second);
+      s_up += (i->first)*(i->first)*(i->second);
+    }
+    
+    return (s_up - (giant*giant))/(s_down - giant);
+  }
+
 
 
   /* The basic, recursive method for traversing a tree toward the 
