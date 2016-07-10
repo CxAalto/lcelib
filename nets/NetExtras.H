@@ -684,7 +684,7 @@ std::ofstream & myfile = std::cout)
 */                                                       
 template<typename NetType>                                                      
 void outputEdgesAndWeights2(NetType& theNet, const size_t logWeights=0, 
-std::ofstream & myfile = std::cout) {                                   
+std::ostream & myfile = std::cout) {                                   
   
   // Print out edges and weights of the network (source dest weight):           
   for (size_t i=0; i<theNet.size(); ++i) {                                      
@@ -953,7 +953,7 @@ void outputOverlap(NetType & net, bool integerOutput=false, bool printAverage = 
         }
 	// calculate and print out the overlap                                                 
 	overlap= (double) nij / ( (double) (ki - 1 + kj - 1 - nij) );
-	isnan(overlap) ? nan_count++ : overlap_avg += overlap;
+	std::isnan(overlap) ? nan_count++ : overlap_avg += overlap;
 	if (integerOutput==false) {
 	  std::cout << i <<   " " << (*j) <<  " " << overlap <<  "\n"; 
 	}

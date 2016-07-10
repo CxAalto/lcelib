@@ -179,7 +179,8 @@ protected:
   pointer pnt() {return &ref();}
   
   void _lce_finalize() { /* Write back. */
-    memcpy(&(target.directRefTo(loc)), &value, &sizeof(ArrayType::ValueType));
+    const size_t theSize = sizeof(ArrayType::ValueType);
+    memcpy(&(target.directRefTo(loc)), &value, &theSize);
   }
   /** 
    * No real difference at this level.
