@@ -1,3 +1,6 @@
+#ifndef DISJOINTSETS_H
+#define DISJOINTSETS_H
+
 #include<cassert>
 #include <iostream>
 #include <map>
@@ -408,3 +411,4 @@ public:
  
 
 
+#endif //DISJOINTSETS_H
