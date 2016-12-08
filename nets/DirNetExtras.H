@@ -512,38 +512,5 @@ double node_entropy(const NetType & net, const size_t i) {
 // <----- node_entropy -----------------------------------------------
 
 
-/** <---- overlap ----------------------------------------------------
- *
- * Calculate the overlap of a given edge. Note that this method is
- * undirected, that is, the direction of edges has no relevance. If
- * the degree of both edges is less than 2, returns -1.
- */
-template <typename NetType>
-double overlap(NetType & net, size_t i, size_t j) {
-  assert( i < net.size() );
-  assert( j < net.size() );
-  size_t ki = net(i).size();
-  size_t kj = net(j).size();
-  if ( (ki < 2) && (kj < 2) ) { 
-    /*
-    std::cerr << "Overlap for edge " << i << "-" << j
-	      << " not defined, returning -1. Careful with averaging!\n";
-    */
-    return (double) -1;
-  }
-  else {
-    // count the common neighbors of i and j                                           
-    size_t nij=0;
-    for (typename NetType::const_edge_iterator k=net(j).begin();
-	 !k.finished();
-	 ++k) {
-      if (net(*k)[i] != 0) ++nij;
-    }
-    // calculate and return the overlap 
-    double overlap_ij = (double) nij / ( (double) (ki - 1 + kj - 1 - nij) );
-    return overlap_ij;
-  }
-}
-// <----- overlap ---------------------------------------------------------
 
 #endif
