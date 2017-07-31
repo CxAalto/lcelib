@@ -1,7 +1,7 @@
 #include <cassert>
 #ifndef UNWEIGHTED_DIJK
 #define UNWEIGHTED_DIJK
-#include "./hashes.H"
+#include "../hashes.H"
 
 /**
  * Unweighed Dijkstra's algorithm, aiming towards O(E)-complexity.

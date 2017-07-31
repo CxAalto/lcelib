@@ -2,8 +2,8 @@
 #define HASHES_H
 #include<limits>
 #include<cassert>
-#include"bits/packedhashcore.H" // The functionality lies here
-#include"HashControllers.H"
+#include"bits/hashcore.H" // The functionality lies here
+#include"containers/indices/HashControllers.H"
 
 /**
  * Common wrappers for hashes. Keys are passed by value, values by 
