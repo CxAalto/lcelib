@@ -140,16 +140,29 @@ public:
     return scdGiant; 
   }
   
-  float getSuscLen(int giant){//compute the susceptibility
-    float s_up=0;
-    float s_down=0;
+  long double getSuscLen(long long int giant){//compute the susceptibility
+    long double s_up=0;
+    long double s_down=0;
     for (typename std::map<ValueType,IndexType>::const_iterator i = lenDistribution->begin();i!=lenDistribution->end();i++) {
-      s_down += (i->first)*(i->second);
-      s_up += (i->first)*(i->first)*(i->second);
+      s_down += (long double)(i->first)*(long double)(i->second);
+      s_up += (long double)(i->first)*(long double)(i->first)*(long double)(i->second);
     }
     
     return (s_up - (giant*giant))/(s_down - giant);
   }
+
+  long double getSuscLen2(long int giant){//compute the susceptibility
+    long double s_up=0;
+    long double s_down=0;
+    for (typename std::map<ValueType,IndexType>::const_iterator i = lenDistribution->begin();i!=lenDistribution->end();i++)
+    {
+      s_down += (long double)(i->first)*(long double)(i->second);
+      s_up += (long double)(i->first)*(long double)(i->first)*(long double)(i->second);
+    }
+
+    return (s_up - (giant*giant))/(s_down);
+  }
+
 
   void setValue(IndexType set, ValueType value){
     minValues[set]=value;
@@ -283,17 +296,52 @@ public:
     return scdGiant; 
   }
   
-  float getSuscSize(int giant){//compute the susceptibility
+  /* Susceptibility defined as the expected size of a component that is not a giant component.
+
+     This is the expected value of the following random variable:
+     * Choose a uniformly random node that is not part of the giant.
+     * Report the size of the component this node belongs to.
+
+     In the context of networks susceptibility is the expected change in the giant component size
+     when a link is placed between the giant component and a uniformly randomly selected node
+     that does not belong to the giant component.
+
+   */
+  long double getSuscSize(long long int giant){
     
-    float s_up=0;
-    float s_down=0;
+    long double s_up=0;
+    long double s_down=0;
     for (typename std::map<IndexType,IndexType>::const_iterator i = sizeDistribution->begin();i!=sizeDistribution->end();i++) {
-      s_down += (i->first)*(i->second);
-      s_up += (i->first)*(i->first)*(i->second);
+      s_down += (long double)(i->first)*(long double)(i->second);
+      s_up += (long double)(i->first)*(long double)(i->first)*(long double)(i->second);
     }
-    
     return (s_up - (giant*giant))/(s_down - giant);
   }
+
+  /* Susceptibility defined as the expected size of a component when giant component counts as size 0.
+
+     This is the expected value of the following random variable:
+     * Choose a uniformly random node.
+     * Report the size of the component this node belongs to, or 0 if it is part of the giant component.
+
+     In the context of networks susceptibility is the expected change in the giant component size
+     when a link is placed between the giant component and a uniformly randomly selected node
+     (that might also belong to the giant component).
+
+   */
+  long double getSuscSize2(long long int giant){
+
+      long double s_up=0;
+      long double s_down=0;
+      for (typename std::map<IndexType,IndexType>::const_iterator i = sizeDistribution->begin();i!=sizeDistribution->end();i++)
+      {
+          s_down += (long double)(i->first)*(long double)(i->second);
+          s_up += (long double)(i->first)*(long double)(i->first)*(long double)(i->second);
+      }
+      return (s_up - (giant*giant))/(s_down);
+  }
+
+
 
 
 
